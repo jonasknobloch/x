@@ -25,16 +25,38 @@ func main() {
 
 	defer ort.DestroyEnvironment()
 
-	inputNames, inputs, _ := initInputs()
-	outputNames, outputs, logits, _ := initOutputs()
-
 	cacheNames, cacheValues := emptyCache()
+
+	logits, outputNames, outputs, err := forward("scripts/onnx-gpt2/model.onnx", 464, 0, cacheNames, cacheValues)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	probs := softmax(logits.GetData())
+
+	idx, p := topK(probs, 10)
+
+	for i, t := range idx {
+		fmt.Printf("%.4f [%d]\n", p[i], t)
+	}
+
+	foo := outputNames[1:]
+	bar := outputs[1:]
+
+	fmt.Println(foo)
+	fmt.Println(bar)
+}
+
+func forward(model string, token int64, position int64, cacheNames []string, cacheValues []ort.Value) (*ort.Tensor[float32], []string, []ort.Value, error) {
+	inputNames, inputs, _ := initInputs(token, position)
+	outputNames, outputs, logits, _ := initOutputs()
 
 	inputNames = append(inputNames, cacheNames...)
 	inputs = append(inputs, cacheValues...)
 
 	session, err := ort.NewAdvancedSession(
-		"scripts/onnx-gpt2/model.onnx",
+		model,
 		inputNames,
 		outputNames,
 		inputs,
@@ -52,20 +74,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	data := logits.GetData()
-	probs := softmax(data)
-
-	idx, p := topK(probs, 10)
-
-	for i, t := range idx {
-		fmt.Printf("%.4f [%d]\n", p[i], t)
-	}
-
-	foo := outputNames[1:]
-	bar := outputs[1:]
-
-	fmt.Println(foo)
-	fmt.Println(bar)
+	return logits, outputNames, outputs, nil
 }
 
 func emptyCache() ([]string, []ort.Value) {
@@ -87,20 +96,20 @@ func emptyCache() ([]string, []ort.Value) {
 	return names, values
 }
 
-func initInputs() ([]string, []ort.Value, error) {
+func initInputs(token, position int64) ([]string, []ort.Value, error) {
 	inputNames := []string{"input_ids", "position_ids", "attention_mask"}
 
 	var tokens *ort.Tensor[int64]
 	var positions *ort.Tensor[int64]
 	var attentionMask *ort.Tensor[int64]
 
-	if t, err := ort.NewTensor[int64]([]int64{1, 1}, []int64{464}); err != nil {
+	if t, err := ort.NewTensor[int64]([]int64{1, 1}, []int64{token}); err != nil {
 		return nil, nil, err
 	} else {
 		tokens = t
 	}
 
-	if p, err := ort.NewTensor[int64]([]int64{1, 1}, []int64{0}); err != nil {
+	if p, err := ort.NewTensor[int64]([]int64{1, 1}, []int64{position}); err != nil {
 		return nil, nil, err
 	} else {
 		positions = p
