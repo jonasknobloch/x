@@ -9,6 +9,12 @@ import (
 	ort "github.com/yalue/onnxruntime_go"
 )
 
+const (
+	nLayers = 12
+	nHeads  = 12
+	headDim = 64
+)
+
 func main() {
 	ort.SetSharedLibraryPath("lib/onnxruntime-osx-arm64-1.22.0/lib/libonnxruntime.1.22.0.dylib")
 
@@ -24,14 +30,22 @@ func main() {
 	tokens, _ := ort.NewTensor[int64]([]int64{1, 1}, []int64{464})
 	positions, _ := ort.NewTensor[int64]([]int64{1, 1}, []int64{0})
 	attentionMask, _ := ort.NewTensor[int64]([]int64{1, 1}, []int64{1})
-	output, _ := ort.NewEmptyTensor[float32]([]int64{1, 1, 50257})
+	logits, _ := ort.NewEmptyTensor[float32]([]int64{1, 1, 50257})
+
+	inputs := []ort.Value{ort.Value(tokens), ort.Value(positions), ort.Value(attentionMask)}
+	outputs := []ort.Value{ort.Value(logits)}
+
+	cacheNames, cacheValues := emptyCache()
+
+	inputNames = append(inputNames, cacheNames...)
+	inputs = append(inputs, cacheValues...)
 
 	session, err := ort.NewAdvancedSession(
 		"scripts/onnx-gpt2/model.onnx",
 		inputNames,
 		outputNames,
-		[]ort.Value{ort.Value(tokens), ort.Value(positions), ort.Value(attentionMask)},
-		[]ort.Value{ort.Value(output)},
+		inputs,
+		outputs,
 		nil,
 	)
 
@@ -45,14 +59,33 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logits := output.GetData()
-	probs := softmax(logits)
+	data := logits.GetData()
+	probs := softmax(data)
 
 	idx, p := topK(probs, 10)
 
 	for i, t := range idx {
 		fmt.Printf("%.4f [%d]\n", p[i], t)
 	}
+}
+
+func emptyCache() ([]string, []ort.Value) {
+	names := make([]string, 0, 2*nLayers)
+	values := make([]ort.Value, 0, 2*nLayers)
+	shape := []int64{1, int64(nHeads), 0, int64(headDim)}
+
+	for i := range nLayers {
+		kName := fmt.Sprintf("past_key_values.%d.key", i)
+		vName := fmt.Sprintf("past_key_values.%d.value", i)
+
+		kTensor, _ := ort.NewEmptyTensor[float32](shape)
+		vTensor, _ := ort.NewEmptyTensor[float32](shape)
+
+		names = append(names, kName, vName)
+		values = append(values, ort.Value(kTensor), ort.Value(vTensor))
+	}
+
+	return names, values
 }
 
 func softmax(logits []float32) []float32 {
