@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -25,16 +26,44 @@ func main() {
 
 	defer ort.DestroyEnvironment()
 
-	if err := generate("scripts/onnx-gpt2/model.onnx", 464, 5); err != nil {
+	prompt := []int64{464, 257, 5025}
+
+	if err := generate("scripts/onnx-gpt2/model.onnx", prompt, 5); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func generate(model string, token int64, steps int64) error {
+func generate(model string, prompt []int64, steps int64) error {
+	if len(prompt) == 0 {
+		return errors.New("empty prompt")
+	}
+
 	cacheNames, cacheValues := emptyCache()
 
+	if len(prompt) > 1 {
+		for i := range prompt {
+			if i == len(prompt)-1 {
+				break
+			}
+
+			position := int64(i)
+			token := prompt[i]
+
+			_, _, outputs, err := forward(model, token, position, cacheNames, cacheValues)
+
+			if err != nil {
+				return err
+			}
+
+			cacheValues = outputs[1:]
+		}
+	}
+
+	token := prompt[len(prompt)-1]
+	offset := int64(len(prompt)) - 1
+
 	for step := range steps {
-		logits, _, outputs, err := forward(model, token, step, cacheNames, cacheValues)
+		logits, _, outputs, err := forward(model, token, offset+step, cacheNames, cacheValues)
 
 		if err != nil {
 			return err
