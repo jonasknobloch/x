@@ -5,6 +5,7 @@ import (
 	"gpt2"
 	"log"
 	mbpe "mbpe-dyn"
+	"os"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 }
 
 func model() *gpt2.Model {
-	return gpt2.NewModel("../gpt2/models/base/model.onnx")
+	return gpt2.NewModel("../gpt2/models/base/model.onnx", os.Getenv("BPC_CUDA_DEVICE_ID"))
 }
 
 func tokenizer() *mbpe.Tokenizer {

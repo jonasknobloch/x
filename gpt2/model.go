@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"slices"
 	"sort"
 
 	ort "github.com/yalue/onnxruntime_go"
@@ -20,12 +21,14 @@ const (
 )
 
 type Model struct {
-	name string
+	name     string
+	deviceID string
 }
 
-func NewModel(name string) *Model {
+func NewModel(name, deviceID string) *Model {
 	return &Model{
-		name: name,
+		name:     name,
+		deviceID: deviceID,
 	}
 }
 
@@ -63,7 +66,7 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 	out := make([]int64, 0, steps+1)
 
 	for step := range context + steps {
-		_, _, outputs, err := forward(m.name, token, step, cacheNames, cacheValues)
+		_, _, outputs, err := m.forward(m.name, token, step, cacheNames, cacheValues)
 
 		if err != nil {
 			return nil, err
@@ -96,12 +99,22 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 	return out[:steps], nil
 }
 
-func forward(model string, token int64, position int64, cacheNames []string, cacheValues []ort.Value) (*ort.Tensor[float32], []string, []ort.Value, error) {
+func (m *Model) forward(model string, token int64, position int64, cacheNames []string, cacheValues []ort.Value) (*ort.Tensor[float32], []string, []ort.Value, error) {
 	inputNames, inputs, _ := initInputs(token, position)
 	outputNames, outputs, logits, _ := initOutputs(position)
 
 	inputNames = append(inputNames, cacheNames...)
 	inputs = append(inputs, cacheValues...)
+
+	var options *ort.SessionOptions
+
+	if m.deviceID != "" {
+		if opts, err := SessionsOptionsWithCUDADeviceID(m.deviceID); err != nil {
+			return nil, nil, nil, err
+		} else {
+			options = opts
+		}
+	}
 
 	session, err := ort.NewAdvancedSession(
 		model,
@@ -109,11 +122,17 @@ func forward(model string, token int64, position int64, cacheNames []string, cac
 		outputNames,
 		inputs,
 		outputs,
-		nil,
+		options,
 	)
 
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if options != nil {
+		if err := options.Destroy(); err != nil {
+			return nil, nil, nil, err
+		}
 	}
 
 	defer session.Destroy()
@@ -211,13 +230,7 @@ func initOutputs(position int64) ([]string, []ort.Value, *ort.Tensor[float32], e
 }
 
 func softmax(logits []float32) []float32 {
-	m := logits[0]
-
-	for _, v := range logits {
-		if v > m {
-			m = v
-		}
-	}
+	m := slices.Max(logits)
 
 	s := float32(0.0)
 	r := make([]float32, len(logits))

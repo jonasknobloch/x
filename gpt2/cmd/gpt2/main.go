@@ -9,7 +9,7 @@ import (
 func main() {
 	prompt := []int64{464, 2068, 7586, 21831}
 
-	m := gpt2.NewModel("models/base/model.onnx")
+	m := gpt2.NewModel("models/base/model.onnx", "")
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
