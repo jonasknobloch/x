@@ -153,7 +153,7 @@ func (e *Evaluator) schedule(tokens []int64, contextSize, stride, batchSize int)
 
 		j.positions = append(j.positions, n)
 		j.tokens = append(j.tokens, tokens[i:min(i+contextSize, len(tokens))]) // TODO verify
-		j.seen = append(j.seen, seen)
+		j.seen = append(j.seen, seen-i)
 
 		seen = i + contextSize
 		n++
@@ -185,7 +185,7 @@ func (e *Evaluator) execute(j *job, device int) {
 		panic(err) // TODO handle
 	}
 
-	nll := negLogLikelihood(logits[:len(logits)-1], toInt(j.tokens[0][1:]))
+	nll := negLogLikelihood(logits[j.seen[0]:len(logits)-1], toInt(j.tokens[0][1+j.seen[0]:]))
 
 	j.results = append(j.results, nll)
 
