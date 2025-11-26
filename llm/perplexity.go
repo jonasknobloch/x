@@ -82,6 +82,8 @@ func (e *Evaluator) Perplexity(name string) (float64, error) {
 		log.Fatal(err)
 	}
 
+	<-done
+
 	total := float64(0)
 
 	for _, nll := range e.results {
