@@ -4,7 +4,11 @@ go 1.24.7
 
 replace mbpe-dyn => github.com/jonasknobloch/mbpe-dyn v0.0.0-20251113214706-ba5a18b759bd
 
-require mbpe-dyn v0.0.0-00010101000000-000000000000
+require (
+	github.com/jonasknobloch/2021ss-smt v0.0.0-20210628141804-4ea7ab68e782
+	github.com/mb-14/gomarkov v0.0.0-20231120193207-9cbdc8df67a8
+	mbpe-dyn v0.0.0-00010101000000-000000000000
+)
 
 require (
 	git.sr.ht/~sbinet/gg v0.6.0 // indirect

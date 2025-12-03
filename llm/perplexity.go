@@ -24,7 +24,7 @@ func (e *Evaluator) Perplexity(name string) (float64, error) {
 
 			line += "\n"
 
-			tokens = append(tokens, toInt64(e.tokenizer.Tokenize(line))...)
+			tokens = append(tokens, ToInt64(e.tokenizer.Tokenize(line))...)
 		}
 
 		return nil
@@ -32,7 +32,7 @@ func (e *Evaluator) Perplexity(name string) (float64, error) {
 		return 0, err
 	}
 
-	contextSize, stride, batchSize := 64, 32, 1
+	contextSize, stride, batchSize := 1024, 512, 1
 
 	if len(tokens) < contextSize {
 		return 0, nil // TODO handle
@@ -187,14 +187,14 @@ func (e *Evaluator) execute(j *job, device int) {
 		panic(err) // TODO handle
 	}
 
-	nll := negLogLikelihood(logits[j.seen[0]:len(logits)-1], toInt(j.tokens[0][1+j.seen[0]:]))
+	nll := NegLogLikelihood(logits[j.seen[0]:len(logits)-1], ToInt(j.tokens[0][1+j.seen[0]:]))
 
 	j.results = append(j.results, nll)
 
 	return
 }
 
-func negLogLikelihood(logits [][]float32, targets []int) float64 {
+func NegLogLikelihood(logits [][]float32, targets []int) float64 {
 	if len(logits) != len(targets) {
 		panic("mismatched input lengths")
 	}

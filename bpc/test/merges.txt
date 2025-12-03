@@ -1,0 +1,7 @@
+#version: 0.2
+B A
+BA A
+B BAA
+A A
+BA BA
+B B
