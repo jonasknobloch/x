@@ -2,9 +2,7 @@ module bpc
 
 go 1.24.7
 
-replace mbpe-dyn => github.com/jonasknobloch/mbpe-dyn v0.0.0-20251113214706-ba5a18b759bd
-
-require mbpe-dyn v0.0.0-00010101000000-000000000000
+require github.com/jonasknobloch/mbpe v0.1.1
 
 require (
 	git.sr.ht/~sbinet/gg v0.6.0 // indirect

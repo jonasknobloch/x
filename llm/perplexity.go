@@ -5,10 +5,11 @@ import (
 	"context"
 	"log"
 	"math"
-	mbpe "mbpe-dyn"
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/jonasknobloch/mbpe"
 )
 
 func (e *Evaluator) Perplexity(name string) (float64, error) {
