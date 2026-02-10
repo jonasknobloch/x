@@ -4,8 +4,9 @@ import (
 	"bpc"
 	"gpt2"
 	"log"
-	mbpe "mbpe-dyn"
 	"os"
+
+	"github.com/jonasknobloch/mbpe"
 )
 
 func main() {
