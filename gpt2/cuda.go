@@ -2,18 +2,11 @@ package gpt2
 
 import ort "github.com/yalue/onnxruntime_go"
 
-func SessionsOptionsWithCUDADeviceID(deviceID string) (*ort.SessionOptions, error) {
-	var sessionOptions *ort.SessionOptions
+func WithCUDAProvider(options *ort.SessionOptions, deviceID string) error {
 	var cudaProviderOptions *ort.CUDAProviderOptions
 
-	if s, err := ort.NewSessionOptions(); err != nil {
-		return nil, err
-	} else {
-		sessionOptions = s
-	}
-
 	if c, err := ort.NewCUDAProviderOptions(); err != nil {
-		return nil, err
+		return err
 	} else {
 		cudaProviderOptions = c
 	}
@@ -21,16 +14,16 @@ func SessionsOptionsWithCUDADeviceID(deviceID string) (*ort.SessionOptions, erro
 	if err := cudaProviderOptions.Update(map[string]string{
 		"device_id": deviceID,
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := sessionOptions.AppendExecutionProviderCUDA(cudaProviderOptions); err != nil {
-		return nil, err
+	if err := options.AppendExecutionProviderCUDA(cudaProviderOptions); err != nil {
+		return err
 	}
 
 	if err := cudaProviderOptions.Destroy(); err != nil {
-		return nil, err
+		return err
 	}
 
-	return sessionOptions, nil
+	return nil
 }

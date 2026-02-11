@@ -8,6 +8,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"strconv"
 
 	ort "github.com/yalue/onnxruntime_go"
 )
@@ -34,7 +35,7 @@ func NewModel(name, deviceID string) *Model {
 	}
 }
 
-func (m *Model) SharedLibraryPath() string {
+func SharedLibraryPath() string {
 	p, ok := os.LookupEnv("ONNXRUNTIME_SHARED_LIBRARY_PATH")
 
 	if !ok {
@@ -44,8 +45,24 @@ func (m *Model) SharedLibraryPath() string {
 	return p
 }
 
+func IntraOpNumThreads() int {
+	s, ok := os.LookupEnv("ONNXRUNTIME_INTRA_OP_NUM_THREADS")
+
+	if !ok {
+		return 0
+	}
+
+	n, err := strconv.Atoi(s)
+
+	if err != nil {
+		return 0
+	}
+
+	return n
+}
+
 func (m *Model) Init() error {
-	ort.SetSharedLibraryPath(m.SharedLibraryPath())
+	ort.SetSharedLibraryPath(SharedLibraryPath())
 
 	if err := ort.InitializeEnvironment(); err != nil {
 		return err
@@ -67,13 +84,23 @@ func (m *Model) Init() error {
 
 	var options *ort.SessionOptions
 
-	if m.deviceID != "" {
-		if opts, err := SessionsOptionsWithCUDADeviceID(m.deviceID); err != nil {
-			return err
-		} else {
-			options = opts
+	if o, err := ort.NewSessionOptions(); err != nil {
+		return err
+	} else {
+		options = o
 
-			defer options.Destroy()
+		defer options.Destroy()
+	}
+
+	if m.deviceID != "" {
+		if err := WithCUDAProvider(options, m.deviceID); err != nil {
+			return err
+		}
+	}
+
+	if n := IntraOpNumThreads(); n > 0 {
+		if err := options.SetIntraOpNumThreads(n); err != nil {
+			return err
 		}
 	}
 
