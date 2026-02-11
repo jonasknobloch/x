@@ -8,6 +8,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"strconv"
 
 	ort "github.com/yalue/onnxruntime_go"
 )
@@ -44,6 +45,22 @@ func (m *Model) SharedLibraryPath() string {
 	return p
 }
 
+func (m *Model) IntraOpNumThreads() int {
+	s, ok := os.LookupEnv("ONNXRUNTIME_INTRA_OP_NUM_THREADS")
+
+	if !ok {
+		return 0
+	}
+
+	n, err := strconv.Atoi(s)
+
+	if err != nil {
+		return 0
+	}
+
+	return n
+}
+
 func (m *Model) Init() error {
 	ort.SetSharedLibraryPath(m.SharedLibraryPath())
 
@@ -76,6 +93,8 @@ func (m *Model) Init() error {
 			defer options.Destroy()
 		}
 	}
+
+	options.SetIntraOpNumThreads(m.IntraOpNumThreads()) // TODO rework into custom session struct
 
 	if s, err := ort.NewDynamicAdvancedSession(m.name, m.inputNames, m.outputNames, options); err != nil {
 		return err
