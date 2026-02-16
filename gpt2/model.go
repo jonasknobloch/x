@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	vocabSize = 50257
-	nLayers   = 12
-	nHeads    = 12
-	headDim   = 64
+	vocabSize  = 50257
+	nLayers    = 12
+	nHeads     = 12
+	headDim    = 64
+	nPositions = 1024
 )
 
 type Model struct {
@@ -120,6 +121,10 @@ func (m *Model) Destroy() error {
 func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]int64, error) {
 	if len(prompt) == 0 {
 		return nil, errors.New("empty prompt")
+	}
+
+	if int64(len(prompt))+steps > nPositions {
+		return nil, errors.New("sequence length exceeds context limit")
 	}
 
 	n := int64(len(prompt))
