@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bpc"
-	"gpt2"
 	"log"
 	"os"
+
+	"github.com/jonasknobloch/x/bpc"
+	"github.com/jonasknobloch/x/gpt2"
 
 	"github.com/jonasknobloch/mbpe"
 )

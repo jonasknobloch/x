@@ -3,12 +3,13 @@ package gpt2
 import (
 	"errors"
 	"fmt"
-	_ "llm"
 	"math"
 	"os"
 	"slices"
 	"sort"
 	"strconv"
+
+	_ "github.com/jonasknobloch/x/llm"
 
 	ort "github.com/yalue/onnxruntime_go"
 )

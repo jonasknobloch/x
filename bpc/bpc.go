@@ -2,8 +2,9 @@ package bpc
 
 import (
 	"fmt"
-	"llm"
 	"log"
+
+	"github.com/jonasknobloch/x/llm"
 )
 
 func Run(model llm.Causal, tokenizer llm.Tokenizer) {

@@ -1,4 +1,4 @@
-module llm
+module github.com/jonasknobloch/x/llm
 
 go 1.25.0
 

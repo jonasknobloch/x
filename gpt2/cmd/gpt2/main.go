@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"gpt2"
 	"log"
+
+	"github.com/jonasknobloch/x/gpt2"
 )
 
 func main() {

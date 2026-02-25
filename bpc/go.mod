@@ -1,4 +1,4 @@
-module bpc
+module github.com/jonasknobloch/x/bpc
 
 go 1.25.0
 
