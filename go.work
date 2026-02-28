@@ -2,6 +2,7 @@ go 1.25.0
 
 use (
 	./bpc
+	./dataset
 	./gpt2
 	./llm
 	./tensor
