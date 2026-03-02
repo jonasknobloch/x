@@ -57,6 +57,14 @@ func NewDense[T any](shape []int) Dense[T] {
 	return out
 }
 
+func (d Dense[T]) Shape() []int {
+	shape := make([]int, len(d.shape))
+
+	copy(shape, d.shape)
+
+	return shape
+}
+
 func (d Dense[T]) Size() int {
 	n := 1
 
