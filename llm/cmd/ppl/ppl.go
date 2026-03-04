@@ -7,20 +7,32 @@ import (
 	"github.com/jonasknobloch/mbpe"
 	"github.com/jonasknobloch/x/dataset"
 	"github.com/jonasknobloch/x/gpt2"
+	"github.com/jonasknobloch/x/llm"
 )
 
 func main() {
-	// lesci.Run()
+	d := data()
+	m := model()
+	t := tokenizer()
 
-	// foo()
+	e := llm.NewEvaluator()
+
+	e.SetTokenizer(t)
+	e.AddModel(m)
+
+	ppl, err := e.Perplexity(d)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(ppl)
 }
 
 func data() *dataset.Reader {
 	var miniPile *dataset.Reader
 
-	// TODO "root" is a weird arg name
-
-	if r, err := dataset.NewReader("dataset/cmd/dataset/tmp/minipile/train"); err != nil {
+	if r, err := dataset.NewReader("dataset/cmd/dataset/tmp/minipile/validation"); err != nil {
 		log.Fatal(err)
 	} else {
 		miniPile = r
@@ -43,7 +55,7 @@ func tokenizer() *mbpe.Tokenizer {
 	m := mbpe.NewMBPE()
 
 	if err := m.Load("gpt2/models/base/vocab.json", "gpt2/models/base/merges.txt"); err != nil {
-		panic("") // TODO
+		log.Fatal(err)
 	}
 
 	t := mbpe.NewTokenizer(m)
@@ -54,26 +66,4 @@ func tokenizer() *mbpe.Tokenizer {
 	t.SetDecoder(byteLevel)
 
 	return t
-}
-
-func foo() {
-	tok := tokenizer()
-	causal := model()
-	pile := data()
-
-	i := 0
-
-	for s := range pile.Texts("text") {
-		if i > 0 {
-			break
-		} else {
-			i++
-		}
-
-		in := tok.Tokenize(s)
-
-		fmt.Print(in)
-
-		_ = causal
-	}
 }

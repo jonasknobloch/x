@@ -1,39 +1,55 @@
 package llm
 
 import (
-	"bufio"
 	"context"
+	"fmt"
 	"log"
 	"math"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/jonasknobloch/mbpe"
+	"github.com/jonasknobloch/x/dataset"
 )
 
-func (e *Evaluator) Perplexity(name string) (float64, error) {
-	tokens := make([]int64, 0)
+func (e *Evaluator) Perplexity(data *dataset.Reader) (float64, error) {
+	docs := make([]string, 0)
 
-	if err := mbpe.FromFile(name, func(scanner *bufio.Scanner) error {
-		for scanner.Scan() {
-			line := scanner.Text()
-
-			if err := scanner.Err(); err != nil {
-				return err
-			}
-
-			line += "\n"
-
-			tokens = append(tokens, toInt64(e.tokenizer.Tokenize(line))...)
-		}
-
-		return nil
-	}); err != nil {
-		return 0, err
+	for d := range data.Texts("text") {
+		docs = append(docs, d)
 	}
 
-	contextSize, stride, batchSize := 64, 32, 1
+	full := strings.Join(docs, "\n\n")
+
+	fmt.Print("tokenizing")
+
+	tokens := toInt64(e.tokenizer.Tokenize(full)) // TODO lazy?
+
+	fmt.Println("tokenized")
+
+	// tokens := make([]int64, 0)
+	//
+	// if err := mbpe.FromFile(name, func(scanner *bufio.Scanner) error {
+	// 	for scanner.Scan() {
+	// 		line := scanner.Text()
+	//
+	// 		if err := scanner.Err(); err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		line += "\n"
+	//
+	// 		tokens = append(tokens, toInt64(e.tokenizer.Tokenize(line))...)
+	// 	}
+	//
+	// 	return nil
+	// }); err != nil {
+	// 	return 0, err
+	// }
+
+	contextSize, stride, batchSize := 1024, 512, 1
 
 	if len(tokens) < contextSize {
 		return 0, nil // TODO handle
@@ -92,6 +108,8 @@ func (e *Evaluator) Perplexity(name string) (float64, error) {
 	}
 
 	average := total / float64(len(e.results)) * float64(contextSize-1)
+
+	// TODO that's probably wrong
 
 	return math.Exp(total / average), nil
 }
