@@ -20,7 +20,7 @@ func main() {
 	e.SetTokenizer(t)
 	e.AddModel(m)
 
-	ppl, err := e.Perplexity(d)
+	ppl, err := e.Perplexity(d, 1024, 512)
 
 	if err != nil {
 		log.Fatal(err)

@@ -13,7 +13,7 @@ import (
 	"github.com/jonasknobloch/x/dataset"
 )
 
-func (e *Evaluator) Perplexity(data *dataset.Reader) (float64, error) {
+func (e *Evaluator) Perplexity(data *dataset.Reader, window, stride int) (float64, error) {
 	docs := make([]string, 0)
 
 	n := 0
@@ -30,13 +30,13 @@ func (e *Evaluator) Perplexity(data *dataset.Reader) (float64, error) {
 
 	tokens := toInt64(e.tokenizer.Tokenize(strings.Join(docs, "\n\n")))[:10240] // TODO performance
 
-	contextSize, stride, batchSize := 64, 32, 1
+	batchSize := 1
 
-	if len(tokens) < contextSize {
+	if len(tokens) < window {
 		return 0, nil // TODO handle
 	}
 
-	windows := ((len(tokens) - contextSize) / stride) + 1
+	windows := ((len(tokens) - window) / stride) + 1
 	jobs := (windows + batchSize - 1) / batchSize
 
 	pb := mbpe.NewProgressBar("Perplexity", 20, jobs, time.Now())
@@ -76,7 +76,7 @@ func (e *Evaluator) Perplexity(data *dataset.Reader) (float64, error) {
 		close(done)
 	}(ctx)
 
-	if err := e.schedule(tokens, contextSize, stride, batchSize); err != nil {
+	if err := e.schedule(tokens, window, stride, batchSize); err != nil {
 		log.Fatal(err)
 	}
 
@@ -88,7 +88,7 @@ func (e *Evaluator) Perplexity(data *dataset.Reader) (float64, error) {
 		total += nll
 	}
 
-	average := total / float64(len(e.results)) * float64(contextSize-1)
+	average := total / float64(len(e.results)) * float64(window-1)
 
 	return math.Exp(total / average), nil
 }
