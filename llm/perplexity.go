@@ -1,37 +1,34 @@
 package llm
 
 import (
-	"bufio"
 	"context"
 	"log"
 	"math"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/jonasknobloch/mbpe"
+	"github.com/jonasknobloch/x/dataset"
 )
 
-func (e *Evaluator) Perplexity(name string) (float64, error) {
-	tokens := make([]int64, 0)
+func (e *Evaluator) Perplexity(data *dataset.Reader) (float64, error) {
+	docs := make([]string, 0)
 
-	if err := mbpe.FromFile(name, func(scanner *bufio.Scanner) error {
-		for scanner.Scan() {
-			line := scanner.Text()
+	n := 0
 
-			if err := scanner.Err(); err != nil {
-				return err
-			}
-
-			line += "\n"
-
-			tokens = append(tokens, toInt64(e.tokenizer.Tokenize(line))...)
+	for d := range data.Texts("text") {
+		if n > 5 {
+			break
 		}
 
-		return nil
-	}); err != nil {
-		return 0, err
+		docs = append(docs, d)
+
+		n++
 	}
+
+	tokens := toInt64(e.tokenizer.Tokenize(strings.Join(docs, "\n\n")))[:10240] // TODO performance
 
 	contextSize, stride, batchSize := 64, 32, 1
 
