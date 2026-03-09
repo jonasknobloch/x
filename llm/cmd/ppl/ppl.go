@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 
 	"github.com/jonasknobloch/mbpe"
 	"github.com/jonasknobloch/x/dataset"
@@ -20,11 +21,24 @@ func main() {
 	e.SetTokenizer(t)
 	e.AddModel(m)
 
-	ppl, err := e.Perplexity(d, 1024, 512)
+	e.Execute = llm.NegLogLikelihood
 
-	if err != nil {
+	if err := e.Run(d, 1024, 512); err != nil {
 		log.Fatal(err)
 	}
+
+	vals, nums := e.Results()
+
+	total := float64(0)
+	n := 0
+
+	for i, v := range vals {
+		total += v
+		n += nums[i]
+	}
+
+	avg := total / float64(n)
+	ppl := math.Exp(avg)
 
 	fmt.Println(ppl)
 }

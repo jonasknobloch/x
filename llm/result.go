@@ -1,6 +1,6 @@
 package llm
 
 type result struct {
-	nll float64
-	n   int
+	value float64
+	n     int
 }

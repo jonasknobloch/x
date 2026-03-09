@@ -3,8 +3,6 @@ package llm
 import (
 	"context"
 	"log"
-	"math"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -13,7 +11,7 @@ import (
 	"github.com/jonasknobloch/x/dataset"
 )
 
-func (e *Evaluator) Perplexity(data *dataset.Reader, window, stride int) (float64, error) {
+func (e *Evaluator) Run(data *dataset.Reader, window, stride int) error {
 	docs := make([]string, 0)
 
 	n := 0
@@ -33,7 +31,7 @@ func (e *Evaluator) Perplexity(data *dataset.Reader, window, stride int) (float6
 	batchSize := 1
 
 	if len(tokens) < window {
-		return 0, nil // TODO handle
+		return nil // TODO handle
 	}
 
 	windows := ((len(tokens) - window) / stride) + 1
@@ -82,17 +80,7 @@ func (e *Evaluator) Perplexity(data *dataset.Reader, window, stride int) (float6
 
 	<-done
 
-	totalNLL := float64(0)
-	totalTokens := 0
-
-	for _, r := range e.results {
-		totalNLL += r.nll
-		totalTokens += r.n
-	}
-
-	average := totalNLL / float64(totalTokens)
-
-	return math.Exp(average), nil
+	return nil
 }
 
 func (e *Evaluator) schedule(tokens []int64, contextSize, stride, batchSize int) error {
@@ -192,43 +180,15 @@ func (e *Evaluator) execute(j *job, device int) {
 		panic(err) // TODO handle
 	}
 
-	nllLogits := logits[j.seen[0]-1 : len(logits)-1]
-	nnlTargets := toInt(j.tokens[0][j.seen[0]:])
+	eLogits := logits[j.seen[0]-1 : len(logits)-1]
+	eTargets := toInt(j.tokens[0][j.seen[0]:])
 
-	nll := negLogLikelihood(nllLogits, nnlTargets)
+	v := e.Execute(eLogits, eTargets)
 
 	j.results = append(j.results, result{
-		nll: nll,
-		n:   len(nnlTargets),
+		value: v,
+		n:     len(eTargets),
 	})
 
 	return
-}
-
-func negLogLikelihood(logits [][]float32, targets []int) float64 {
-	if len(logits) != len(targets) {
-		panic("mismatched input lengths")
-	}
-
-	total := float64(0)
-
-	for i, target := range targets {
-		maxLogit := float64(slices.Max(logits[i]))
-
-		sumExp := float64(0)
-
-		for _, v := range logits[i] {
-			sumExp += math.Exp(float64(v) - maxLogit)
-		}
-
-		logSumExp := maxLogit + math.Log(sumExp)
-
-		targetLogit := float64(logits[i][target])
-
-		logProb := targetLogit - logSumExp
-
-		total -= logProb
-	}
-
-	return total
 }
