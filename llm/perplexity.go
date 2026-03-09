@@ -82,15 +82,17 @@ func (e *Evaluator) Perplexity(data *dataset.Reader, window, stride int) (float6
 
 	<-done
 
-	total := float64(0)
+	totalNLL := float64(0)
+	totalTokens := 0
 
-	for _, nll := range e.results {
-		total += nll
+	for _, r := range e.results {
+		totalNLL += r.nll
+		totalTokens += r.n
 	}
 
-	average := total / float64(len(e.results)) * float64(window-1)
+	average := totalNLL / float64(totalTokens)
 
-	return math.Exp(total / average), nil
+	return math.Exp(average), nil
 }
 
 func (e *Evaluator) schedule(tokens []int64, contextSize, stride, batchSize int) error {
@@ -139,7 +141,7 @@ func (e *Evaluator) schedule(tokens []int64, contextSize, stride, batchSize int)
 	// 1024 to 2047: 1536 upwards
 	// ...
 
-	seen := 0
+	seen := 1 // first token as context
 	n := 0
 
 	// for i := 0; i < len(tokens); i += stride {
@@ -156,6 +158,7 @@ func (e *Evaluator) schedule(tokens []int64, contextSize, stride, batchSize int)
 		j.seen = append(j.seen, seen-i)
 
 		seen = i + contextSize
+
 		n++
 	}
 
@@ -175,6 +178,10 @@ func (e *Evaluator) execute(j *job, device int) {
 		panic("unimplemented")
 	}
 
+	if j.seen[0] < 1 {
+		panic("empty context")
+	}
+
 	m := e.models[device]
 
 	logits := make([][]float32, 0, len(j.tokens[0]))
@@ -185,9 +192,15 @@ func (e *Evaluator) execute(j *job, device int) {
 		panic(err) // TODO handle
 	}
 
-	nll := negLogLikelihood(logits[j.seen[0]:len(logits)-1], toInt(j.tokens[0][1+j.seen[0]:]))
+	nllLogits := logits[j.seen[0]-1 : len(logits)-1]
+	nnlTargets := toInt(j.tokens[0][j.seen[0]:])
 
-	j.results = append(j.results, nll)
+	nll := negLogLikelihood(nllLogits, nnlTargets)
+
+	j.results = append(j.results, result{
+		nll: nll,
+		n:   len(nnlTargets),
+	})
 
 	return
 }

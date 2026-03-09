@@ -6,14 +6,14 @@ type Evaluator struct {
 	mutex     sync.RWMutex
 	models    []Causal
 	tokenizer Tokenizer
-	results   []float64
+	results   []result
 	jobs      int
 }
 
 func NewEvaluator() *Evaluator {
 	return &Evaluator{
 		models:  make([]Causal, 0),
-		results: make([]float64, 0),
+		results: make([]result, 0),
 	}
 }
 
