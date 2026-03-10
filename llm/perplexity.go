@@ -3,6 +3,8 @@ package llm
 import (
 	"context"
 	"log"
+	"math"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -10,6 +12,35 @@ import (
 	"github.com/jonasknobloch/mbpe"
 	"github.com/jonasknobloch/x/dataset"
 )
+
+func watchProgress(ctx context.Context, e *Evaluator, pb *mbpe.ProgressBar, jobs int, done chan struct{}) {
+main:
+	for {
+		select {
+		case <-ctx.Done():
+			break main
+		default:
+			time.Sleep(time.Second * 1)
+
+			e.mutex.RLock()
+
+			j := e.jobs
+
+			e.mutex.RUnlock()
+
+			pb.Update(j)
+			pb.Print()
+
+			if j >= jobs {
+				break main
+			}
+		}
+	}
+
+	pb.Finish()
+
+	close(done)
+}
 
 func (e *Evaluator) Run(data *dataset.Reader, window, stride int) error {
 	docs := make([]string, 0)
@@ -45,36 +76,9 @@ func (e *Evaluator) Run(data *dataset.Reader, window, stride int) error {
 
 	done := make(chan struct{})
 
-	go func(ctx context.Context) {
-	main:
-		for {
-			select {
-			case <-ctx.Done():
-				break main
-			default:
-				time.Sleep(time.Second * 1)
+	go watchProgress(ctx, e, pb, jobs, done)
 
-				e.mutex.RLock()
-
-				j := e.jobs
-
-				e.mutex.RUnlock()
-
-				pb.Update(j)
-				pb.Print()
-
-				if j >= jobs {
-					break main
-				}
-			}
-		}
-
-		pb.Finish()
-
-		close(done)
-	}(ctx)
-
-	if err := e.schedule(tokens, window, stride, batchSize); err != nil {
+	if err := e.schedule(0, tokens, window, stride, batchSize); err != nil {
 		log.Fatal(err)
 	}
 
@@ -83,7 +87,37 @@ func (e *Evaluator) Run(data *dataset.Reader, window, stride int) error {
 	return nil
 }
 
-func (e *Evaluator) schedule(tokens []int64, contextSize, stride, batchSize int) error {
+func (e *Evaluator) RunDocs(data *dataset.Reader, window, stride int) error {
+	batchSize := 1
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan struct{})
+
+	pb := mbpe.NewProgressBar("Perplexity", 20, 500, time.Now()) // allow updating total jobs
+
+	go watchProgress(ctx, e, pb, 500, done)
+
+	n := 0
+
+	for d := range data.Texts("text") {
+		tokens := toInt64(e.tokenizer.Tokenize(d))
+
+		if err := e.schedule(n, tokens, window, stride, batchSize); err != nil {
+			return err
+		}
+
+		// TODO track Doc for correct progress
+
+		n++
+	}
+
+	<-done
+	return nil
+}
+
+func (e *Evaluator) schedule(uid int, tokens []int64, contextSize, stride, batchSize int) error {
 	jobs := make(chan *job)
 
 	var wg sync.WaitGroup
@@ -141,6 +175,7 @@ func (e *Evaluator) schedule(tokens []int64, contextSize, stride, batchSize int)
 			j = newJob(batchSize)
 		}
 
+		j.document = uid
 		j.positions = append(j.positions, n)
 		j.tokens = append(j.tokens, tokens[i:min(i+contextSize, len(tokens))]) // TODO verify
 		j.seen = append(j.seen, seen-i)
@@ -186,9 +221,52 @@ func (e *Evaluator) execute(j *job, device int) {
 	v := e.Execute(eLogits, eTargets)
 
 	j.results = append(j.results, result{
-		value: v,
-		n:     len(eTargets),
+		value:  v,
+		n:      len(eTargets),
+		logits: selectLogits(eLogits, eTargets),
+		tokens: eTargets,
+		doc:    j.document,
 	})
 
 	return
+}
+
+func selectLogits(logits [][]float32, tokens []int) []float32 {
+	if len(logits) != len(tokens) {
+		panic("length mismatch")
+	}
+
+	// TODO there should be a nice tensor solution?
+
+	r := make([]float32, len(tokens))
+
+	for i, token := range tokens {
+		logprobs := logSoftmax(logits[i])
+
+		r[i] = logprobs[token]
+	}
+
+	return r
+}
+
+func logSoftmax(logits []float32) []float32 {
+	m := slices.Max(logits)
+
+	s := float32(0.0)
+	r := make([]float32, len(logits))
+
+	for i, v := range logits {
+		e := float32(math.Exp(float64(v - m)))
+
+		r[i] = v
+		s += e
+	}
+
+	lse := float32(math.Log(float64(s))) + m
+
+	for i := range r {
+		r[i] -= lse
+	}
+
+	return r
 }

@@ -1,6 +1,7 @@
 package llm
 
 type job struct {
+	document  int
 	positions []int
 	tokens    [][]int64
 	seen      []int

@@ -7,4 +7,5 @@ use (
 	./llm
 	./res/lesci
 	./tensor
+	./tui
 )

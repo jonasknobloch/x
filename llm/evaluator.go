@@ -1,6 +1,9 @@
 package llm
 
-import "sync"
+import (
+	"iter"
+	"sync"
+)
 
 type Evaluator struct {
 	mutex     sync.RWMutex
@@ -36,4 +39,30 @@ func (e *Evaluator) Results() ([]float64, []int) {
 	}
 
 	return v, n
+}
+
+type RRow struct {
+	Doc    int
+	Token  int
+	Logit  float32
+	Offset int
+}
+
+func (e *Evaluator) Foo() iter.Seq[RRow] {
+	return func(yield func(row RRow) bool) {
+		for _, r := range e.results {
+			for j := range r.tokens {
+				row := RRow{
+					Doc:    r.doc,
+					Token:  r.tokens[j],
+					Logit:  r.logits[j],
+					Offset: j,
+				}
+
+				if !yield(row) {
+					return
+				}
+			}
+		}
+	}
 }

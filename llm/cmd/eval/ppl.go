@@ -11,7 +11,7 @@ import (
 	"github.com/jonasknobloch/x/llm"
 )
 
-func main() {
+func perplexity() {
 	d := data()
 	m := model()
 	t := tokenizer()
