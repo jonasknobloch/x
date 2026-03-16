@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jonasknobloch/x/gpt2"
+	"go.jknobloc.com/x/gpt2"
 )
 
 func main() {

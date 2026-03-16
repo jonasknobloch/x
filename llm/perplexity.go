@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/jonasknobloch/mbpe"
-	"github.com/jonasknobloch/x/dataset"
+
+	"go.jknobloc.com/x/dataset"
 )
 
 func (e *Evaluator) Perplexity(data *dataset.Reader, window, stride int) (float64, error) {

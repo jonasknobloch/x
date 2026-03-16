@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/jonasknobloch/x/bpc"
-	"github.com/jonasknobloch/x/gpt2"
-
 	"github.com/jonasknobloch/mbpe"
+
+	"go.jknobloc.com/x/bpc"
+	"go.jknobloc.com/x/gpt2"
 )
 
 func main() {

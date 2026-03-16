@@ -9,9 +9,9 @@ import (
 	"sort"
 	"strconv"
 
-	_ "github.com/jonasknobloch/x/llm"
-
 	ort "github.com/yalue/onnxruntime_go"
+
+	_ "go.jknobloc.com/x/llm"
 )
 
 const (

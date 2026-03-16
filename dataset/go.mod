@@ -1,4 +1,4 @@
-module github.com/jonasknobloch/x/dataset
+module go.jknobloc.com/x/dataset
 
 go 1.25.0
 

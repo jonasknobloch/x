@@ -5,7 +5,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/jonasknobloch/x/dataset"
+	"go.jknobloc.com/x/dataset"
 )
 
 func main() {

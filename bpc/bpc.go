@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jonasknobloch/x/llm"
+	"go.jknobloc.com/x/llm"
 )
 
 func Run(model llm.Causal, tokenizer llm.Tokenizer) {
