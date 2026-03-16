@@ -27,38 +27,38 @@ func NewProgressBar(title string, width, steps int, start time.Time) *ProgressBa
 	return pb
 }
 
-func (p *ProgressBar) Increment() {
-	p.n++
+func (pb *ProgressBar) Increment() {
+	pb.n++
 }
 
-func (p *ProgressBar) Update(steps int) {
-	p.n = steps
+func (pb *ProgressBar) Update(steps int) {
+	pb.n = steps
 }
 
-func (p *ProgressBar) Print() {
-	fmt.Print(p.String())
+func (pb *ProgressBar) Print() {
+	fmt.Print(pb.String())
 }
 
-func (p *ProgressBar) Finish() {
+func (pb *ProgressBar) Finish() {
 	fmt.Println()
 }
 
-func (p *ProgressBar) String() string {
-	progress := int(float64(p.n) / float64(p.steps) * float64(p.width))
-	percentage := int(float64(p.n) / float64(p.steps) * 100)
+func (pb *ProgressBar) String() string {
+	progress := int(float64(pb.n) / float64(pb.steps) * float64(pb.width))
+	percentage := int(float64(pb.n) / float64(pb.steps) * 100)
 
-	lap := time.Since(p.start)
+	lap := time.Since(pb.start)
 
 	duration := fmt.Sprintf("%02d:%02d:%02d", int(lap.Hours()), int(lap.Minutes())%60, int(lap.Seconds())%60)
 
 	return fmt.Sprintf(
 		"\r[%s] %-20s %3d%% [%s%s] %d/%d",
 		duration,
-		p.title,
+		pb.title,
 		percentage,
-		strings.Repeat("=", min(progress, p.width)),
-		strings.Repeat("-", max(0, p.width-progress)),
-		p.n,
-		p.steps,
+		strings.Repeat("=", min(progress, pb.width)),
+		strings.Repeat("-", max(0, pb.width-progress)),
+		pb.n,
+		pb.steps,
 	)
 }
