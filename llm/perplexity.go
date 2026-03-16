@@ -14,7 +14,7 @@ import (
 	"go.jknobloc.com/x/dataset"
 )
 
-func (e *Evaluator) Perplexity(data *dataset.Reader, window, stride int) (float64, error) {
+func (e *Evaluator) Perplexity(data *dataset.ParquetReader, window, stride int) (float64, error) {
 	docs := make([]string, 0)
 
 	n := 0

@@ -30,10 +30,10 @@ func main() {
 	fmt.Println(ppl)
 }
 
-func data() *dataset.Reader {
-	var miniPile *dataset.Reader
+func data() *dataset.ParquetReader {
+	var miniPile *dataset.ParquetReader
 
-	if r, err := dataset.NewReader("dataset/cmd/dataset/tmp/minipile/validation"); err != nil {
+	if r, err := dataset.NewParquetReader("dataset/cmd/dataset/tmp/minipile/validation"); err != nil {
 		log.Fatal(err)
 	} else {
 		miniPile = r

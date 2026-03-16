@@ -19,9 +19,9 @@ func main() {
 
 	split := filepath.Join(root, "train")
 
-	var reader *dataset.Reader
+	var reader *dataset.ParquetReader
 
-	if r, err := dataset.NewReader(split); err != nil {
+	if r, err := dataset.NewParquetReader(split); err != nil {
 		log.Fatal(err)
 	} else {
 		reader = r

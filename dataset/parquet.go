@@ -15,13 +15,13 @@ import (
 	"github.com/apache/arrow-go/v18/parquet/pqarrow"
 )
 
-type Reader struct {
+type ParquetReader struct {
 	shards    []string
 	batchSize int64
 	err       error
 }
 
-func NewReader(name string) (*Reader, error) {
+func NewParquetReader(name string) (*ParquetReader, error) {
 	var shards []string
 
 	if matches, err := filepath.Glob(filepath.Join(name, "*.parquet")); err != nil {
@@ -36,7 +36,7 @@ func NewReader(name string) (*Reader, error) {
 
 	slices.Sort(shards)
 
-	r := &Reader{
+	r := &ParquetReader{
 		shards:    shards,
 		batchSize: 1024,
 	}
@@ -44,11 +44,11 @@ func NewReader(name string) (*Reader, error) {
 	return r, nil
 }
 
-func (r *Reader) Err() error {
+func (r *ParquetReader) Err() error {
 	return r.err
 }
 
-func (r *Reader) Texts(column string) iter.Seq[string] {
+func (r *ParquetReader) Texts(column string) iter.Seq[string] {
 	return func(yield func(string) bool) {
 		for _, name := range r.shards {
 			err := read(name, column, r.batchSize, yield)
