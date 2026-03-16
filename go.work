@@ -6,4 +6,5 @@ use (
 	./gpt2
 	./llm
 	./tensor
+	./tui
 )
