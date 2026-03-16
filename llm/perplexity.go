@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/jonasknobloch/mbpe"
-	"github.com/jonasknobloch/x/dataset"
+
+	"go.jknobloc.com/x/dataset"
 )
 
 func watchProgress(ctx context.Context, e *Evaluator, pb *mbpe.ProgressBar, jobs int, done chan struct{}) {

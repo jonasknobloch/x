@@ -6,9 +6,10 @@ import (
 	"math"
 
 	"github.com/jonasknobloch/mbpe"
-	"github.com/jonasknobloch/x/dataset"
-	"github.com/jonasknobloch/x/gpt2"
-	"github.com/jonasknobloch/x/llm"
+
+	"go.jknobloc.com/x/dataset"
+	"go.jknobloc.com/x/gpt2"
+	"go.jknobloc.com/x/llm"
 )
 
 func perplexity() {

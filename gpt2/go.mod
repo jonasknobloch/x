@@ -1,4 +1,4 @@
-module github.com/jonasknobloch/x/gpt2
+module go.jknobloc.com/x/gpt2
 
 go 1.25.0
 
