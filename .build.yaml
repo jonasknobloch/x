@@ -1,0 +1,31 @@
+image: alpine/edge
+
+packages:
+  - git
+  - uv
+  - hut
+
+sources:
+  - git@git.sr.ht:~jknobloc/x
+  - git@git.sr.ht:~jknobloc/ci
+
+artifacts:
+  - ci/out/review.txt
+  - ci/out/commit.diff
+  - ci/out/changed-files.txt
+  - ci/out/review-input.md
+  - ci/out/commit-hash.txt
+
+secrets:
+  - ef74fec7-e8c5-45ae-b8b3-e041e135b8fa
+  - f807db13-a46f-409c-bc1b-ab664b3863b3
+  - 2466a33d-33da-493a-b5cd-69422afaaac2
+  - b0738016-541b-4f8b-af97-e9ac82fac51c
+
+environment:
+  LLM_MODEL: claude-haiku-4.5
+  SRHT_TODO_TRACKER: x-review
+
+tasks:
+  - review-last-commit: |
+      cd x && ../ci/scripts/ci.sh review ../ci/out
