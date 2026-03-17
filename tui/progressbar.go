@@ -40,7 +40,7 @@ func (pb *ProgressBar) Print() {
 }
 
 func (pb *ProgressBar) Finish() {
-	fmt.Println()
+	fmt.Println(pb.String())
 }
 
 func (pb *ProgressBar) String() string {
