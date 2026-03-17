@@ -10,8 +10,6 @@ import (
 	"strconv"
 
 	ort "github.com/yalue/onnxruntime_go"
-
-	_ "go.jknobloc.com/x/llm"
 )
 
 const (
