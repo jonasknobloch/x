@@ -28,6 +28,7 @@ func (p *pool[K]) Len() int {
 
 func (p *pool[K]) Acquire() K {
 	p.mutex.Lock()
+
 	defer p.mutex.Unlock()
 
 	for {

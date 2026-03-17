@@ -1,33 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/jonasknobloch/mbpe"
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/gpt2"
-	"go.jknobloc.com/x/llm"
 )
 
 func main() {
-	d := data()
-	m := model()
-	t := tokenizer()
-
-	e := llm.NewEvaluator()
-
-	e.SetTokenizer(t)
-	e.AddModel(m)
-
-	ppl, err := e.Perplexity(d, 1024, 512)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(ppl)
+	perplexity()
 }
 
 func data() *dataset.ParquetReader {

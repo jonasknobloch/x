@@ -1,19 +1,30 @@
 package llm
 
-type job struct {
-	positions []int
-	tokens    [][]int64
-	seen      []int
-	results   []result
-	debug     [][2]int
+type Job struct {
+	Document int
+	Position int
+	Tokens   []int64
+	Seen     int
 }
 
-func newJob(batchSize int) *job {
-	return &job{
-		positions: make([]int, 0, batchSize),
-		tokens:    make([][]int64, 0, batchSize),
-		seen:      make([]int, 0, batchSize),
-		results:   make([]result, 0, batchSize),
-		debug:     make([][2]int, 0),
+type batch struct {
+	jobs []Job
+}
+
+func newBatch(capacity int) *batch {
+	return &batch{
+		jobs: make([]Job, 0, capacity),
 	}
+}
+
+func (b *batch) Size() int {
+	return len(b.jobs)
+}
+
+func (b *batch) AddJob(job Job) {
+	if b.Size() == cap(b.jobs) {
+		panic("batch full")
+	}
+
+	b.jobs = append(b.jobs, job)
 }
