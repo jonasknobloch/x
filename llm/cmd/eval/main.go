@@ -11,6 +11,7 @@ import (
 
 func main() {
 	perplexity()
+	// logprobs()
 }
 
 func data() *dataset.ParquetReader {
