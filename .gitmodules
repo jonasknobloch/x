@@ -1,0 +1,3 @@
+[submodule "mbpe"]
+	path = mbpe
+	url = git@github.com:jonasknobloch/mbpe.git
