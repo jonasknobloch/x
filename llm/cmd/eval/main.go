@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/jonasknobloch/mbpe"
+	"go.jknobloc.com/x/tokenizer/bpe"
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/gpt2"
@@ -36,19 +36,14 @@ func model() *gpt2.Model {
 	return m
 }
 
-func tokenizer() *mbpe.Tokenizer {
-	m := mbpe.NewMBPE()
+func tokenizer() *bpe.Tokenizer {
+	var tok *bpe.Tokenizer
 
-	if err := m.Load("gpt2/models/base/vocab.json", "gpt2/models/base/merges.txt"); err != nil {
+	if t, err := bpe.NewTokenizerFromFiles("gpt2/models/base/vocab.json", "gpt2/models/base/merges.txt"); err != nil {
 		log.Fatal(err)
+	} else {
+		tok = t
 	}
 
-	t := mbpe.NewTokenizer(m)
-
-	byteLevel := mbpe.NewByteLevel(false)
-
-	t.SetPreTokenizer(byteLevel)
-	t.SetDecoder(byteLevel)
-
-	return t
+	return tok
 }
