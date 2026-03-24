@@ -23,21 +23,18 @@ const (
 
 type FSA struct {
 	state  int
-	input  []rune
 	static []string
 }
 
 func NewFSA() *FSA {
 	return &FSA{
 		state:  StateInitial,
-		input:  make([]rune, 0),
 		static: []string{"'s", "'t", "'re", "'m", "'ll", "'d"},
 	}
 }
 
 func (f *FSA) Reset() {
 	f.state = StateInitial
-	f.input = make([]rune, 0)
 }
 
 func (f *FSA) Read(next rune) bool {
@@ -58,64 +55,52 @@ func (f *FSA) Read(next rune) bool {
 	if f.state == StateInitial {
 		switch r {
 		case RuneUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateU32
 
 			break
 		case RuneWhitespaceNotUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateWhitespaceNotUnicode32
 
 			break
 		case RuneLetter:
-			f.input = append(f.input, next)
 			f.state = StateLetter
 
 			break
 		case RuneNumber:
-			f.input = append(f.input, next)
 			f.state = StateNumber
 
 			break
 		default:
-			f.input = append(f.input, next)
 			f.state = StateOther
 		}
 	} else if f.state == StateU32 {
 		switch r {
 		case RuneUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateWhitespaceLookAhead
 
 			break
 		case RuneWhitespaceNotUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateWhitespaceLookAhead
 
 			break
 		case RuneLetter:
-			f.input = append(f.input, next)
 			f.state = StateLetter
 
 			break
 		case RuneNumber:
-			f.input = append(f.input, next)
 			f.state = StateNumber
 
 			break
 		default:
-			f.input = append(f.input, next)
 			f.state = StateOther
 		}
 	} else if f.state == StateWhitespaceNotUnicode32 {
 		switch r {
 		case RuneUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateWhitespaceLookAhead
 
 			break
 		case RuneWhitespaceNotUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateWhitespaceLookAhead
 
 			break
@@ -125,7 +110,6 @@ func (f *FSA) Read(next rune) bool {
 	} else if f.state == StateNumber {
 		switch r {
 		case RuneNumber:
-			f.input = append(f.input, next)
 			f.state = StateNumber
 
 			break
@@ -135,7 +119,6 @@ func (f *FSA) Read(next rune) bool {
 	} else if f.state == StateLetter {
 		switch r {
 		case RuneLetter:
-			f.input = append(f.input, next)
 			f.state = StateLetter
 
 			break
@@ -145,7 +128,6 @@ func (f *FSA) Read(next rune) bool {
 	} else if f.state == StateOther {
 		switch r {
 		case RuneOther:
-			f.input = append(f.input, next)
 			f.state = StateOther
 
 			break
@@ -155,12 +137,10 @@ func (f *FSA) Read(next rune) bool {
 	} else if f.state == StateWhitespaceLookAhead {
 		switch r {
 		case RuneUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateWhitespaceLookAhead
 
 			break
 		case RuneWhitespaceNotUnicode32:
-			f.input = append(f.input, next)
 			f.state = StateWhitespaceLookAhead
 
 			break
@@ -175,50 +155,60 @@ func (f *FSA) Read(next rune) bool {
 }
 
 func (f *FSA) FindAll(s string) []string {
-	var findAll func(runes []rune, matches []string) []string
+	var findAll func(start int, matches []string) []string
 
-	findAll = func(runes []rune, matches []string) []string {
-		s = string(runes)
+	findAll = func(start int, matches []string) []string {
+		if start >= len(s) {
+			return matches
+		}
 
 		for _, v := range f.static {
-			if strings.HasPrefix(s, v) {
+			if strings.HasPrefix(s[start:], v) {
 				matches = append(matches, v)
-				runes = runes[utf8.RuneCountInString(v):]
 
-				if len(runes) == 0 {
+				next := start + len(v)
+
+				if next >= len(s) {
 					return matches
 				}
 
-				return findAll(runes, matches)
+				return findAll(next, matches)
 			}
 		}
 
-		for i, r := range runes {
+		prev, stop := start, start
+
+		for stop < len(s) {
+			r, size := utf8.DecodeRuneInString(s[stop:])
+
 			ok := f.Read(r)
 
-			if !ok {
+			if ok {
+				prev = stop
+				stop += size
+			} else {
 				if f.state == StateInitial {
 					return matches
 				}
 
 				if f.state == StateWhitespaceLookAhead {
-					matches = append(matches, string(f.input[:len(f.input)-1]))
+					matches = append(matches, s[start:prev])
 
 					f.Reset()
 
-					return findAll(runes[i-1:], matches)
+					return findAll(prev, matches)
 				}
 
-				matches = append(matches, string(f.input))
+				matches = append(matches, s[start:stop])
 
 				f.Reset()
 
-				return findAll(runes[i:], matches)
+				return findAll(stop, matches)
 			}
 		}
 
-		if len(f.input) > 0 {
-			matches = append(matches, string(f.input))
+		if start < len(s) {
+			matches = append(matches, s[start:])
 		}
 
 		return matches
@@ -226,5 +216,5 @@ func (f *FSA) FindAll(s string) []string {
 
 	defer f.Reset()
 
-	return findAll([]rune(s), make([]string, 0))
+	return findAll(0, make([]string, 0))
 }
