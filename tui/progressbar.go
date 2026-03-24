@@ -14,6 +14,8 @@ type ProgressBar struct {
 	total     atomic.Int64
 	completed atomic.Int64
 	start     time.Time
+	done      chan struct{}
+	cancel    context.CancelFunc
 }
 
 func NewProgressBar(title string, width, total int, start time.Time) *ProgressBar {
@@ -21,6 +23,7 @@ func NewProgressBar(title string, width, total int, start time.Time) *ProgressBa
 		title: title,
 		width: width,
 		start: start,
+		done:  make(chan struct{}),
 	}
 
 	pb.total.Store(int64(total))
@@ -98,32 +101,47 @@ func (pb *ProgressBar) String() string {
 	)
 }
 
-func (pb *ProgressBar) Watch(
-	ctx context.Context,
+func (pb *ProgressBar) Start(
 	interval time.Duration,
 	callback func() int,
 ) {
-	ticker := time.NewTicker(interval)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	defer ticker.Stop()
+	pb.cancel = cancel
 
-	for {
-		select {
-		case <-ctx.Done():
-			n := callback()
+	go func() {
+		ticker := time.NewTicker(interval)
 
-			pb.SetCompleted(n)
+		defer ticker.Stop()
 
-			pb.Finish()
+		defer close(pb.done)
 
-			return
+		for {
+			select {
+			case <-ctx.Done():
+				n := callback()
 
-		case <-ticker.C:
-			n := callback()
+				pb.SetCompleted(n)
 
-			pb.SetCompleted(n)
+				pb.Finish()
 
-			pb.Print()
+				return
+
+			case <-ticker.C:
+				n := callback()
+
+				pb.SetCompleted(n)
+
+				pb.Print()
+			}
 		}
+	}()
+}
+
+func (pb *ProgressBar) Close() {
+	if pb.cancel != nil {
+		pb.cancel()
+
+		<-pb.done
 	}
 }

@@ -1,7 +1,6 @@
 package llm
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -47,15 +46,13 @@ func (e *Evaluator[R]) Run(data dataset.Reader, window, stride int) error {
 		}()
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	defer cancel()
-
 	pb := tui.NewProgressBar("Perplexity", 20, 0, time.Now())
 
-	go pb.Watch(ctx, 1*time.Second, func() int {
+	pb.Start(1*time.Second, func() int {
 		return int(e.completed.Load())
 	})
+
+	defer pb.Close()
 
 	n := 0
 
