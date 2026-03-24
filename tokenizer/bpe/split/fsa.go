@@ -155,6 +155,13 @@ func (f *FSA) Read(next rune) bool {
 }
 
 func (f *FSA) FindAll(s string) []string {
+	if !utf8.ValidString(s) {
+		// s = strings.ToValidUTF8(s, string(utf8.RuneError)) replaces with a single utf8.RuneError
+		// s = strings.Map(func(r rune) rune { return r }, s) should be identical to s = string([]rune(s))
+
+		s = string([]rune(s)) // replaces each invalid byte with utf8.RuneError during decoding
+	}
+
 	var findAll func(start int, matches []string) []string
 
 	findAll = func(start int, matches []string) []string {
