@@ -6,5 +6,6 @@ use (
 	./llm
 	./mbpe
 	./tensor
+	./tokenizer
 	./tui
 )
