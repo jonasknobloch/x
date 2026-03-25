@@ -55,7 +55,7 @@ func logprobs() {
 		defer stmt.Close()
 	}
 
-	if err := e.RunAndCollect(d, 1024, 512, func(r logProbs) error {
+	if err := e.RunAndCollect("LogProbs", d, 1024, 512, func(r logProbs) error {
 		for _, l := range r {
 			if err := insert(insertStmt, l); err != nil {
 				return err

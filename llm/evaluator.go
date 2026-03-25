@@ -40,7 +40,7 @@ func (e *Evaluator[R]) Results() chan R {
 	return e.results
 }
 
-func (e *Evaluator[R]) RunAndCollect(data dataset.Reader, window, stride int, callback func(R) error) error {
+func (e *Evaluator[R]) RunAndCollect(title string, data dataset.Reader, window, stride int, callback func(R) error) error {
 	var wg sync.WaitGroup
 
 	var collectErr error
@@ -57,7 +57,7 @@ func (e *Evaluator[R]) RunAndCollect(data dataset.Reader, window, stride int, ca
 		}
 	}()
 
-	runErr := e.Run(data, window, stride)
+	runErr := e.Run(title, data, window, stride)
 
 	wg.Wait()
 

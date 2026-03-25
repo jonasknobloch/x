@@ -9,7 +9,7 @@ import (
 	"go.jknobloc.com/x/tui"
 )
 
-func (e *Evaluator[R]) Run(data dataset.Reader, window, stride int) error {
+func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int) error {
 	devices := make([]int, len(e.models))
 
 	for i := range len(devices) {
@@ -46,7 +46,7 @@ func (e *Evaluator[R]) Run(data dataset.Reader, window, stride int) error {
 		}()
 	}
 
-	pb := tui.NewProgressBar("Perplexity", 20, 0, time.Now())
+	pb := tui.NewProgressBar(title, 20, 0, time.Now())
 
 	pb.Start(1*time.Second, func() int {
 		return int(e.completed.Load())

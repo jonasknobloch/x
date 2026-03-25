@@ -33,7 +33,7 @@ func perplexity() {
 	total := float64(0)
 	n := 0
 
-	if err := e.RunAndCollect(d, 1024, 512, func(r pplResult) error {
+	if err := e.RunAndCollect("Perplexity", d, 1024, 512, func(r pplResult) error {
 		total += r.v
 		n += r.n
 
