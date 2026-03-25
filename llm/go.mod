@@ -4,9 +4,9 @@ go 1.25.0
 
 require (
 	github.com/duckdb/duckdb-go/v2 v2.10500.0
-	github.com/jonasknobloch/mbpe v0.1.1
 	go.jknobloc.com/x/dataset v0.0.0-20260316162507-b3c48d34e3b5
 	go.jknobloc.com/x/gpt2 v0.0.0-20260316162507-b3c48d34e3b5
+	go.jknobloc.com/x/tokenizer v0.0.0-20260324194423-87bbece7e040
 	go.jknobloc.com/x/tui v0.0.0-20260316162507-b3c48d34e3b5
 )
 
@@ -32,6 +32,7 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/jonasknobloch/mbpe v0.1.1 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
