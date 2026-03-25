@@ -6,7 +6,6 @@ import (
 	"log"
 	"math"
 	"slices"
-	"sync"
 
 	_ "github.com/duckdb/duckdb-go/v2"
 
@@ -56,35 +55,16 @@ func logprobs() {
 		defer stmt.Close()
 	}
 
-	results := e.Results()
-
-	var wg sync.WaitGroup
-	var writeErr error
-
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		for r := range results {
-			for _, l := range r {
-				if err := insert(insertStmt, l); err != nil {
-					writeErr = err
-
-					return
-				}
+	if err := e.RunAndCollect(d, 1024, 512, func(r logProbs) error {
+		for _, l := range r {
+			if err := insert(insertStmt, l); err != nil {
+				return err
 			}
 		}
-	}()
 
-	if err := e.Run(d, 1024, 512); err != nil {
+		return nil
+	}); err != nil {
 		log.Fatal(err)
-	}
-
-	wg.Wait()
-
-	if writeErr != nil {
-		log.Fatal(writeErr)
 	}
 }
 

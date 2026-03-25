@@ -1,7 +1,11 @@
 package llm
 
 import (
+	"errors"
+	"sync"
 	"sync/atomic"
+
+	"go.jknobloc.com/x/dataset"
 )
 
 type Evaluator[R any] struct {
@@ -34,4 +38,28 @@ func NewEvaluator[R any](model Causal, tokenizer Tokenizer, callback func(job Jo
 
 func (e *Evaluator[R]) Results() chan R {
 	return e.results
+}
+
+func (e *Evaluator[R]) RunAndCollect(data dataset.Reader, window, stride int, callback func(R) error) error {
+	var wg sync.WaitGroup
+
+	var collectErr error
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		for r := range e.results {
+			if err := callback(r); err != nil && collectErr == nil {
+				collectErr = err
+			}
+		}
+	}()
+
+	runErr := e.Run(data, window, stride)
+
+	wg.Wait()
+
+	return errors.Join(runErr, collectErr)
 }

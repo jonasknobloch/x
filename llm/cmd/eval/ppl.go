@@ -5,7 +5,6 @@ import (
 	"log"
 	"math"
 	"strings"
-	"sync"
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/llm"
@@ -31,29 +30,17 @@ func perplexity() {
 		}
 	})
 
-	results := e.Results()
-
-	var wg sync.WaitGroup
-
 	total := float64(0)
 	n := 0
 
-	wg.Add(1)
+	if err := e.RunAndCollect(d, 1024, 512, func(r pplResult) error {
+		total += r.v
+		n += r.n
 
-	go func() {
-		defer wg.Done()
-
-		for r := range results {
-			total += r.v
-			n += r.n
-		}
-	}()
-
-	if err := e.Run(d, 1024, 512); err != nil {
+		return nil
+	}); err != nil {
 		log.Fatal(err)
 	}
-
-	wg.Wait()
 
 	avg := total / float64(n)
 	ppl := math.Exp(avg)
