@@ -24,15 +24,11 @@ type logProbs []logProb
 
 func logprobs() {
 	d := data()
+
 	m := model()
 	t := tokenizer()
 
-	e := llm.NewEvaluator[logProbs]()
-
-	e.SetTokenizer(t)
-	e.AddModel(m)
-
-	e.SetCallback(func(j llm.Job, logits [][]float32, tokens []int) logProbs {
+	e := llm.NewEvaluator(m, t, func(j llm.Job, logits [][]float32, tokens []int) logProbs {
 		probs := selectLogProbs(logits, tokens)
 
 		r := make(logProbs, len(tokens))

@@ -20,26 +20,16 @@ type Evaluator[R any] struct {
 	callback func(job Job, logits [][]float32, tokens []int) R
 }
 
-func NewEvaluator[R any]() *Evaluator[R] {
+func NewEvaluator[R any](model Causal, tokenizer Tokenizer, callback func(job Job, logits [][]float32, tokens []int) R) *Evaluator[R] {
 	return &Evaluator[R]{
-		models:     make([]Causal, 0),
+		models:     []Causal{model}, // TODO multiple devices
+		tokenizer:  tokenizer,
 		batchSize:  1, // TODO arg
 		numWorkers: 4, // TODO arg
 		jobs:       make(chan batch, 1024),
 		results:    make(chan R, 1024),
+		callback:   callback,
 	}
-}
-
-func (e *Evaluator[R]) AddModel(model Causal) {
-	e.models = append(e.models, model)
-}
-
-func (e *Evaluator[R]) SetTokenizer(tokenizer Tokenizer) {
-	e.tokenizer = tokenizer
-}
-
-func (e *Evaluator[R]) SetCallback(callback func(job Job, logits [][]float32, tokens []int) R) {
-	e.callback = callback
 }
 
 func (e *Evaluator[R]) Results() chan R {

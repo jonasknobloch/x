@@ -25,7 +25,7 @@ func TestEvaluator_estimateJobs(t *testing.T) {
 		{tokens: 1, window: 1, stride: 1024, expected: 1},
 	}
 
-	e := NewEvaluator[any]()
+	e := NewEvaluator[any](nil, nil, nil)
 
 	for _, tt := range tests {
 		t.Run(

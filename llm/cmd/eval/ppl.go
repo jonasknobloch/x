@@ -18,15 +18,11 @@ type pplResult struct {
 
 func perplexity() {
 	d := data()
+
 	m := model()
 	t := tokenizer()
 
-	e := llm.NewEvaluator[pplResult]()
-
-	e.SetTokenizer(t)
-	e.AddModel(m)
-
-	e.SetCallback(func(job llm.Job, logits [][]float32, tokens []int) pplResult {
+	e := llm.NewEvaluator(m, t, func(job llm.Job, logits [][]float32, tokens []int) pplResult {
 		p, n := llm.NegLogLikelihood(logits, tokens)
 
 		return pplResult{
