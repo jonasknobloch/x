@@ -2,6 +2,7 @@ package bpe
 
 import (
 	"github.com/jonasknobloch/mbpe"
+
 	"go.jknobloc.com/x/tokenizer/bpe/split"
 )
 

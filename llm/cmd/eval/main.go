@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 
-	"go.jknobloc.com/x/tokenizer/bpe"
-
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/gpt2"
+	"go.jknobloc.com/x/tokenizer/bpe"
 )
 
 func main() {
