@@ -109,5 +109,7 @@ func tokenizer() llm.Tokenizer {
 		tok = t
 	}
 
+	_ = bpe.ByteCoverage(tok)
+
 	return tok
 }

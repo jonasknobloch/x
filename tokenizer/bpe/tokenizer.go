@@ -20,6 +20,14 @@ func (t *Tokenizer) Decode(ids []int) string {
 	panic("unimplemented") // TODO implement
 }
 
-func (t *Tokenizer) Tokenize(s string) []int {
+func (t *Tokenizer) Tokenize(s string) (ids []int) {
+	defer func() {
+		if r := recover(); r != nil {
+			// defer UnknownRunes(t, s)
+
+			ids = []int{}
+		}
+	}()
+
 	return t.Encode(s)
 }
