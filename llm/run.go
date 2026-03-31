@@ -52,12 +52,24 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 		return int(e.completed.Load())
 	})
 
-	defer pb.Close()
+	s := 0 // skipped
+	n := 0 // total
 
-	n := 0
+	defer func() {
+		fmt.Printf("skipped %d of %d texts\n", s, n)
+	}()
+
+	defer pb.Close()
 
 	for d := range data.Texts("text") {
 		tokens := toInt64(e.tokenizer.Tokenize(d))
+
+		if len(tokens) == 0 {
+			n++
+			s++
+
+			continue
+		}
 
 		e.schedule(n, tokens, window, stride, e.batchSize)
 
