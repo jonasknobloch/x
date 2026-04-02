@@ -114,7 +114,7 @@ func TestTokenBuffer_Tail(t *testing.T) {
 		got = append(got, w)
 	}
 
-	if tail := tb.Tail(); tail != nil {
+	if tail, _ := tb.Tail(); tail != nil {
 		got = append(got, tail)
 	}
 
@@ -128,6 +128,34 @@ func TestTokenBuffer_Tail(t *testing.T) {
 		if !slices.Equal(got[i], expected[i]) {
 			t.Errorf("window %d: expected %v but got %v", i, expected[i], got[i])
 		}
+	}
+}
+
+func TestTokenBuffer_Seen(t *testing.T) {
+	tb := NewTokenBuffer(byteTokenizer{}, 4, 2)
+
+	tb.SetIncludeTail(false)
+
+	var seen []int
+
+	for _, s := range tb.Push(0, "abcdefgh") {
+		seen = append(seen, s)
+	}
+
+	expected := []int{0, 2, 4}
+
+	if len(seen) != len(expected) {
+		t.Fatalf("expected %d seen values but got %d", len(expected), len(seen))
+	}
+
+	for i := range seen {
+		if seen[i] != expected[i] {
+			t.Errorf("window %d: expected seen=%d but got seen=%d", i, expected[i], seen[i])
+		}
+	}
+
+	if _, s := tb.Tail(); s != 6 {
+		t.Errorf("expected tail seen=6 but got %d", s)
 	}
 }
 
@@ -148,7 +176,7 @@ func TestTokenBuffer_DocumentBoundaryYieldsTail(t *testing.T) {
 
 	var b [][]int64
 
-	for w := range tb.Push(2, "fghij") {
+	for w, _ := range tb.Push(2, "fghij") {
 		b = append(b, w)
 	}
 
@@ -160,5 +188,31 @@ func TestTokenBuffer_DocumentBoundaryYieldsTail(t *testing.T) {
 
 	if !slices.Equal(b[0], expected) {
 		t.Errorf("expected %v but got %v", expected, b[0])
+	}
+}
+
+func TestTokenBuffer_TailSeen(t *testing.T) {
+	tb := NewTokenBuffer(byteTokenizer{}, 4, 2)
+
+	tb.SetIncludeTail(true)
+
+	var lastSeen int
+
+	for _, s := range tb.Push(0, "abcdefgh") {
+		lastSeen = s
+	}
+
+	if lastSeen != 4 {
+		t.Errorf("expected last seen=4 but got %d", lastSeen)
+	}
+
+	tail, tailSeen := tb.Tail()
+
+	if !slices.Equal(tail, toInt64(byteTokenizer{}.Tokenize("gh"))) {
+		t.Errorf("unexpected tail: %v", tail)
+	}
+
+	if tailSeen != 6 {
+		t.Errorf("expected tail seen=6 but got %d", tailSeen)
 	}
 }
