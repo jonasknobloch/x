@@ -43,14 +43,11 @@ func (tb *TokenBuffer) Seen() int {
 func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
 	return func(yield func([]int64, int) bool) {
 		if tb.document != -1 && document != tb.document {
-			if tb.includeTail && len(tb.buffer) > 0 {
-				if !yield(tb.buffer, tb.seen) {
-					return
-				}
-			}
+			tail, seen := tb.Tail()
 
-			tb.buffer = nil
-			tb.seen = 0
+			if len(tail) > 0 && !yield(tail, seen) {
+				return
+			}
 		}
 
 		tb.document = document
@@ -80,19 +77,22 @@ func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
 }
 
 func (tb *TokenBuffer) Tail() ([]int64, int) {
+	seen := tb.seen
+
+	tb.document = -1
+	tb.seen = 0
+
 	if !tb.includeTail || len(tb.buffer) == 0 {
-		return nil, tb.seen
+		tb.buffer = tb.buffer[:0]
+
+		return nil, seen
 	}
 
 	w := make([]int64, len(tb.buffer))
 
 	copy(w, tb.buffer)
 
-	seen := tb.seen
-
-	tb.buffer = nil
-	tb.document = -1
-	tb.seen = 0
+	tb.buffer = tb.buffer[:0]
 
 	return w, seen
 }
