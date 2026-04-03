@@ -52,30 +52,54 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 		return int(e.completed.Load())
 	})
 
-	s := 0 // skipped
-	n := 0 // total
-
-	defer func() {
-		fmt.Printf("skipped %d of %d texts\n", s, n)
-	}()
+	n := 0
+	m := 0
 
 	defer pb.Close()
 
+	tb := NewTokenBuffer(e.tokenizer, window, stride)
+
+	tb.SetIncludeTail(false)
+
+	b := newBatch(e.batchSize)
+
 	for d := range data.Texts("text") {
-		tokens := toInt64(e.tokenizer.Tokenize(d))
+		for w, s := range tb.Push(n, d) {
+			if s == 0 {
+				s = 1 // first token as context
+			}
 
-		if len(tokens) == 0 {
-			n++
-			s++
+			b.AddJob(Job{
+				Document: n,
+				Position: m,
+				Tokens:   w,
+				Seen:     s,
+			})
 
-			continue
+			m++
+
+			if b.Size() == e.batchSize {
+				e.jobs <- *b
+
+				b = newBatch(e.batchSize)
+
+				e.scheduled.Add(int64(e.batchSize))
+
+				pb.SetTotal(int(e.scheduled.Load()))
+			}
 		}
 
-		e.schedule(n, tokens, window, stride, e.batchSize)
-
-		pb.SetTotal(pb.Total() + e.estimateJobs(tokens, window, stride))
-
 		n++
+
+		m = 0
+	}
+
+	if s := b.Size(); s > 0 {
+		e.jobs <- *b
+
+		e.scheduled.Add(int64(s))
+
+		pb.SetTotal(int(e.scheduled.Load()))
 	}
 
 	close(e.jobs)
@@ -85,60 +109,6 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 	close(e.results)
 
 	return nil
-}
-
-func (e *Evaluator[R]) estimateJobs(tokens []int64, window, stride int) int {
-	if len(tokens) < window {
-		return 0
-	}
-
-	windows := ((len(tokens) - window) / stride) + 1
-	// jobs := (windows + batchSize - 1) / e.batchSize
-
-	return windows
-}
-
-func (e *Evaluator[R]) schedule(uid int, tokens []int64, contextSize, stride, batchSize int) {
-	b := newBatch(batchSize)
-
-	seen := 1 // first token as context
-	n := 0
-
-	// for i := 0; i+contextSize <= len(tokens); i += stride {
-	for i := 0; i < len(tokens); i += stride {
-		if b.Size() == batchSize {
-			e.jobs <- *b
-
-			b = newBatch(batchSize)
-		}
-
-		j := min(i+contextSize, len(tokens))
-
-		if j-i < contextSize {
-			break // don't add jobs with partial windows
-		}
-
-		// if j < seen {
-		// 	break // don't add jobs with no new tokens
-		// }
-
-		b.AddJob(Job{
-			Document: uid,
-			Position: n,
-			Tokens:   tokens[i:j],
-			Seen:     seen - i,
-		})
-
-		seen = i + contextSize
-
-		n++
-	}
-
-	if b.Size() > 0 {
-		e.jobs <- *b
-	}
-
-	e.scheduled.Add(int64(n))
 }
 
 func (e *Evaluator[R]) execute(j *batch, device int) {
