@@ -46,6 +46,22 @@ func NewParquetReader(name string) (*ParquetReader, error) {
 	return r, nil
 }
 
+func (p *ParquetReader) Num() (int, error) {
+	r := 0
+
+	for _, name := range p.shards {
+		n, err := numRows(name)
+
+		if err != nil {
+			return 0, err
+		}
+
+		r += int(n)
+	}
+
+	return r, nil
+}
+
 func (p *ParquetReader) Err() error {
 	return p.err
 }
@@ -146,4 +162,18 @@ func (p *ParquetReader) read(name string) iter.Seq[string] {
 			}
 		}
 	}
+}
+
+func numRows(name string) (int64, error) {
+	var reader *file.Reader
+
+	if r, err := file.OpenParquetFile(name, false); err != nil {
+		return 0, err
+	} else {
+		reader = r
+
+		defer reader.Close()
+	}
+
+	return reader.NumRows(), nil
 }

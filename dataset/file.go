@@ -37,6 +37,10 @@ func NewFileReader(name, pattern string) (*FileReader, error) {
 	return f, nil
 }
 
+func (f *FileReader) Num() (int, error) {
+	return len(f.shards), nil
+}
+
 func (f *FileReader) Err() error {
 	return f.err
 }

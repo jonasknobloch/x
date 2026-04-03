@@ -20,6 +20,10 @@ func (s *StringReader) Texts() iter.Seq2[int, string] {
 	}
 }
 
+func (s *StringReader) Num() (int, error) {
+	return 1, nil
+}
+
 func (s *StringReader) Err() error {
 	return nil
 }
