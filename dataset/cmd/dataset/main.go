@@ -27,12 +27,8 @@ func main() {
 		reader = r
 	}
 
-	i := 0
-
-	for s := range reader.Texts() {
-		_ = s
-		fmt.Printf("\r%d", i+1)
-		i++
+	for n := range reader.Texts() {
+		fmt.Printf("\r%d", n)
 	}
 
 	if err := reader.Err(); err != nil {

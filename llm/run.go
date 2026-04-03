@@ -52,9 +52,6 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 		return int(e.completed.Load())
 	})
 
-	n := 0
-	m := 0
-
 	defer pb.Close()
 
 	tb := NewTokenBuffer(e.tokenizer, window, stride)
@@ -63,20 +60,28 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 
 	b := newBatch(e.batchSize)
 
-	for d := range data.Texts() {
+	doc := 0
+	pos := 0
+
+	for n, d := range data.Texts() {
+		if n != doc {
+			pos = 0
+			doc = n
+		}
+
 		for w, s := range tb.Push(n, d) {
 			if s == 0 {
 				s = 1 // first token as context
 			}
 
 			b.AddJob(Job{
-				Document: n,
-				Position: m,
+				Document: doc,
+				Position: pos,
 				Tokens:   w,
 				Seen:     s,
 			})
 
-			m++
+			pos++
 
 			if b.Size() == e.batchSize {
 				e.jobs <- *b
@@ -88,10 +93,6 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 				pb.SetTotal(int(e.scheduled.Load()))
 			}
 		}
-
-		n++
-
-		m = 0
 	}
 
 	if s := b.Size(); s > 0 {

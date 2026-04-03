@@ -53,9 +53,7 @@ func main() {
 
 	defer pb.Close()
 
-	n := 0
-
-	for d := range reader.Texts() {
+	for n, d := range reader.Texts() {
 		if n >= 1000 {
 			break
 		}
@@ -65,8 +63,6 @@ func main() {
 		_ = tokens
 
 		processed.Add(1)
-
-		n++
 	}
 
 	if *memprofile != "" {

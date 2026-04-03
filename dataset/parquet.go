@@ -46,92 +46,104 @@ func NewParquetReader(name string) (*ParquetReader, error) {
 	return r, nil
 }
 
-func (r *ParquetReader) Err() error {
-	return r.err
+func (p *ParquetReader) Err() error {
+	return p.err
 }
 
-func (r *ParquetReader) Texts() iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for _, name := range r.shards {
-			err := read(name, r.textColumn, r.batchSize, yield)
+func (p *ParquetReader) Texts() iter.Seq2[int, string] {
+	return func(yield func(int, string) bool) {
+		n := 0
 
-			if errors.Is(err, stop) {
-				return
-			}
+		for _, name := range p.shards {
+			for text := range p.read(name) {
+				if p.err != nil {
+					return
+				}
 
-			if err != nil {
-				r.err = err
+				if !yield(n, text) {
+					return
+				}
 
-				return
+				n++
 			}
 		}
 	}
 }
 
-var stop = errors.New("stop")
+func (p *ParquetReader) read(name string) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		var reader *file.Reader
 
-func read(name, column string, batchSize int64, yield func(string) bool) error {
-	var reader *file.Reader
+		if r, err := file.OpenParquetFile(name, false); err != nil {
+			p.err = err
 
-	if r, err := file.OpenParquetFile(name, false); err != nil {
-		return err
-	} else {
-		reader = r
+			return
+		} else {
+			reader = r
+		}
 
 		defer reader.Close()
-	}
 
-	var arrowReader *pqarrow.FileReader
+		var arrowReader *pqarrow.FileReader
 
-	if r, err := pqarrow.NewFileReader(reader, pqarrow.ArrowReadProperties{BatchSize: batchSize}, memory.DefaultAllocator); err != nil {
-		return err
-	} else {
-		arrowReader = r
-	}
+		if r, err := pqarrow.NewFileReader(reader, pqarrow.ArrowReadProperties{BatchSize: p.batchSize}, memory.DefaultAllocator); err != nil {
+			p.err = err
 
-	var schema *arrow.Schema
+			return
+		} else {
+			arrowReader = r
+		}
 
-	if s, err := arrowReader.Schema(); err != nil {
-		return err
-	} else {
-		schema = s
-	}
+		var schema *arrow.Schema
 
-	idxs := schema.FieldIndices(column)
+		if s, err := arrowReader.Schema(); err != nil {
+			p.err = err
 
-	if len(idxs) == 0 {
-		return errors.New("unknown column")
-	}
+			return
+		} else {
+			schema = s
+		}
 
-	var recordReader pqarrow.RecordReader
+		idxs := schema.FieldIndices(p.textColumn)
 
-	if r, err := arrowReader.GetRecordReader(context.TODO(), []int{idxs[0]}, nil); err != nil {
-		return err
-	} else {
-		recordReader = r
+		if len(idxs) == 0 {
+			p.err = errors.New("unknown column")
+
+			return
+		}
+
+		var recordReader pqarrow.RecordReader
+
+		if r, err := arrowReader.GetRecordReader(context.TODO(), []int{idxs[0]}, nil); err != nil {
+			p.err = err
+
+			return
+		} else {
+			recordReader = r
+		}
 
 		defer recordReader.Release()
-	}
 
-	for recordReader.Next() {
-		record := recordReader.RecordBatch()
+		for recordReader.Next() {
+			record := recordReader.RecordBatch()
 
-		text, ok := record.Column(0).(*array.String)
+			text, ok := record.Column(0).(*array.String)
 
-		if !ok {
-			return fmt.Errorf("unexpected column type")
-		}
+			if !ok {
+				p.err = fmt.Errorf("unexpected column type")
 
-		for i := range int(record.NumRows()) {
-			if !text.IsValid(i) {
-				continue
+				return
 			}
 
-			if !yield(text.Value(i)) {
-				return stop
+			for i := range int(record.NumRows()) {
+				if !text.IsValid(i) {
+					continue
+				}
+
+				if !yield(text.Value(i)) {
+					return
+				}
 			}
 		}
 	}
-
-	return nil
 }
