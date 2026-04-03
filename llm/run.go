@@ -63,7 +63,7 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 
 	b := newBatch(e.batchSize)
 
-	for d := range data.Texts("text") {
+	for d := range data.Texts() {
 		for w, s := range tb.Push(n, d) {
 			if s == 0 {
 				s = 1 // first token as context

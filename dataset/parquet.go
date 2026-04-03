@@ -16,9 +16,10 @@ import (
 )
 
 type ParquetReader struct {
-	shards    []string
-	batchSize int64
-	err       error
+	shards     []string
+	textColumn string
+	batchSize  int64
+	err        error
 }
 
 func NewParquetReader(name string) (*ParquetReader, error) {
@@ -37,8 +38,9 @@ func NewParquetReader(name string) (*ParquetReader, error) {
 	slices.Sort(shards)
 
 	r := &ParquetReader{
-		shards:    shards,
-		batchSize: 1024,
+		shards:     shards,
+		textColumn: "text",
+		batchSize:  1024,
 	}
 
 	return r, nil
@@ -48,10 +50,10 @@ func (r *ParquetReader) Err() error {
 	return r.err
 }
 
-func (r *ParquetReader) Texts(column string) iter.Seq[string] {
+func (r *ParquetReader) Texts() iter.Seq[string] {
 	return func(yield func(string) bool) {
 		for _, name := range r.shards {
-			err := read(name, column, r.batchSize, yield)
+			err := read(name, r.textColumn, r.batchSize, yield)
 
 			if errors.Is(err, stop) {
 				return

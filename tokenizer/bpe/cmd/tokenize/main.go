@@ -55,7 +55,7 @@ func main() {
 
 	n := 0
 
-	for d := range reader.Texts("text") {
+	for d := range reader.Texts() {
 		if n >= 1000 {
 			break
 		}

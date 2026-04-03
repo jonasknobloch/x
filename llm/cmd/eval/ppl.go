@@ -53,7 +53,7 @@ func joined() dataset.Reader {
 
 	docs := make([]string, 0)
 
-	for d := range miniPile.Texts("text") {
+	for d := range miniPile.Texts() {
 		docs = append(docs, d)
 	}
 

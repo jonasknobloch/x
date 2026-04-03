@@ -29,7 +29,7 @@ func main() {
 
 	i := 0
 
-	for s := range reader.Texts("text") {
+	for s := range reader.Texts() {
 		_ = s
 		fmt.Printf("\r%d", i+1)
 		i++

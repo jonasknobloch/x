@@ -12,7 +12,7 @@ func NewStringReader(s string) *StringReader {
 	}
 }
 
-func (s *StringReader) Texts(_ string) iter.Seq[string] {
+func (s *StringReader) Texts() iter.Seq[string] {
 	return func(yield func(string) bool) {
 		if !yield(s.s) {
 			return
