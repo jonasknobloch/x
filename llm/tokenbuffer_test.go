@@ -131,31 +131,33 @@ func TestTokenBuffer_Tail(t *testing.T) {
 	}
 }
 
-func TestTokenBuffer_Seen(t *testing.T) {
+func TestTokenBuffer_Position(t *testing.T) {
 	tb := NewTokenBuffer(byteTokenizer{}, 4, 2)
 
 	tb.SetIncludeTail(false)
 
-	var seen []int
+	var positions []int
 
-	for _, s := range tb.Push(0, "abcdefgh") {
-		seen = append(seen, s)
+	for range tb.Push(0, "abcdefgh") {
+		positions = append(positions, tb.Position())
 	}
 
 	expected := []int{0, 2, 4}
 
-	if len(seen) != len(expected) {
-		t.Fatalf("expected %d seen values but got %d", len(expected), len(seen))
+	if len(positions) != len(expected) {
+		t.Fatalf("expected %d positions but got %d", len(expected), len(positions))
 	}
 
-	for i := range seen {
-		if seen[i] != expected[i] {
-			t.Errorf("window %d: expected seen=%d but got seen=%d", i, expected[i], seen[i])
+	for i := range positions {
+		if positions[i] != expected[i] {
+			t.Errorf("window %d: expected positions=%d but got positions=%d", i, expected[i], positions[i])
 		}
 	}
 
-	if _, s := tb.Tail(); s != 6 {
-		t.Errorf("expected tail seen=6 but got %d", s)
+	_, seen := tb.Tail()
+
+	if tailPosition := positions[len(positions)-1] + seen; tailPosition != 6 {
+		t.Errorf("expected tail positions=6 but got %d", tailPosition)
 	}
 }
 
@@ -191,28 +193,30 @@ func TestTokenBuffer_DocumentBoundaryYieldsTail(t *testing.T) {
 	}
 }
 
-func TestTokenBuffer_TailSeen(t *testing.T) {
+func TestTokenBuffer_TailPosition(t *testing.T) {
 	tb := NewTokenBuffer(byteTokenizer{}, 4, 2)
 
 	tb.SetIncludeTail(true)
 
-	var lastSeen int
+	var lastPosition int
 
-	for _, s := range tb.Push(0, "abcdefgh") {
-		lastSeen = s
+	for range tb.Push(0, "abcdefgh") {
+		lastPosition = tb.Position()
 	}
 
-	if lastSeen != 4 {
-		t.Errorf("expected last seen=4 but got %d", lastSeen)
+	if lastPosition != 4 {
+		t.Errorf("expected last position=4 but got %d", lastPosition)
 	}
 
-	tail, tailSeen := tb.Tail()
+	tail, seen := tb.Tail()
+
+	tailPosition := lastPosition + seen
 
 	if !slices.Equal(tail, toInt64(byteTokenizer{}.Tokenize("gh"))) {
 		t.Errorf("unexpected tail: %v", tail)
 	}
 
-	if tailSeen != 6 {
-		t.Errorf("expected tail seen=6 but got %d", tailSeen)
+	if tailPosition != 6 {
+		t.Errorf("expected tail position=6 but got %d", tailPosition)
 	}
 }

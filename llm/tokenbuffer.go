@@ -8,7 +8,7 @@ type TokenBuffer struct {
 	stride      int
 	buffer      []int64
 	document    int
-	seen        int
+	position    int
 	includeTail bool
 }
 
@@ -23,7 +23,7 @@ func NewTokenBuffer(tokenizer Tokenizer, window, stride int) *TokenBuffer {
 		stride:      stride,
 		buffer:      make([]int64, 0, 2*window),
 		document:    -1,
-		seen:        0,
+		position:    0,
 		includeTail: true,
 	}
 }
@@ -36,8 +36,8 @@ func (tb *TokenBuffer) SetIncludeTail(includeTail bool) {
 	tb.includeTail = includeTail
 }
 
-func (tb *TokenBuffer) Seen() int {
-	return tb.seen
+func (tb *TokenBuffer) Position() int {
+	return tb.position
 }
 
 func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
@@ -65,11 +65,11 @@ func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
 
 			copy(w, tb.buffer[:tb.window])
 
-			if !yield(w, tb.seen) {
+			if !yield(w, min(tb.Position(), tb.window-tb.stride)) {
 				return
 			}
 
-			tb.seen += tb.stride
+			tb.position += tb.stride
 
 			tb.buffer = append(tb.buffer[:0], tb.buffer[tb.stride:]...)
 		}
@@ -77,10 +77,10 @@ func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
 }
 
 func (tb *TokenBuffer) Tail() ([]int64, int) {
-	seen := tb.seen
+	seen := min(tb.Position(), min(len(tb.buffer), tb.window-tb.stride))
 
 	tb.document = -1
-	tb.seen = 0
+	tb.position = 0
 
 	if !tb.includeTail || len(tb.buffer) == 0 {
 		tb.buffer = tb.buffer[:0]
