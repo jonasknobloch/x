@@ -40,18 +40,14 @@ func (a *Allocator) InputNames() []string {
 }
 
 func (a *Allocator) OutputNames() []string {
-	capacity := 1 + 2*a.config.nLayers
-
-	if a.withLogProbs {
-		capacity++
-	}
+	capacity := 2*a.config.nLayers + 1
 
 	names := make([]string, 0, capacity)
 
-	names = append(names, "logits")
-
 	if a.withLogProbs {
 		names = append(names, "log_probs")
+	} else {
+		names = append(names, "logits")
 	}
 
 	if a.withCache {
@@ -141,21 +137,11 @@ func (a *Allocator) initInputs(tokens []int64) error {
 func (a *Allocator) initOutputs(tokens []int64) error {
 	capacity := 1
 
-	if a.withLogProbs {
-		capacity++
-	}
-
 	if a.withCache {
 		capacity += 2 * a.config.nLayers
 	}
 
 	names := make([]string, 0, capacity)
-
-	if err := a.logits(tokens, false); err != nil {
-		return err
-	}
-
-	names = append(names, "logits")
 
 	if a.withLogProbs {
 		if err := a.logProbs(tokens, false); err != nil {
@@ -163,6 +149,12 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 		}
 
 		names = append(names, "log_probs")
+	} else {
+		if err := a.logits(tokens, false); err != nil {
+			return err
+		}
+
+		names = append(names, "logits")
 	}
 
 	if !a.withCache {
@@ -205,12 +197,12 @@ func (a *Allocator) Step(token int64) error {
 		return err
 	}
 
-	if err := a.logits(tokens, true); err != nil {
-		return err
-	}
-
 	if a.withLogProbs {
 		if err := a.logProbs(tokens, true); err != nil {
+			return err
+		}
+	} else {
+		if err := a.logits(tokens, true); err != nil {
 			return err
 		}
 	}

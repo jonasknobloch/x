@@ -175,7 +175,7 @@ func (m *Model) Score(tokens []int64, logProbs *[]float32) error {
 	if logProbs != nil {
 		_, outputs := m.allocator.Outputs()
 
-		d := outputs[1].(*ort.Tensor[float32]).GetData()
+		d := outputs[0].(*ort.Tensor[float32]).GetData()
 
 		*logProbs = append(*logProbs, d...)
 	}
