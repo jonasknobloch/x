@@ -26,7 +26,7 @@ func fromModel() []float32 {
 }
 
 func model() *Model {
-	m := NewModel("models/base/model.onnx", "0") // TODO check if CUDA is available
+	m := NewModel("models/base/model.onnx", "0", NewDefaultConfig()) // TODO check if CUDA is available
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)

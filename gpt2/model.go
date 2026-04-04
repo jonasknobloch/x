@@ -11,25 +11,19 @@ import (
 	ort "github.com/yalue/onnxruntime_go"
 )
 
-const (
-	vocabSize  = 50257
-	nLayers    = 12
-	nHeads     = 12
-	headDim    = 64
-	nPositions = 1024
-)
-
 type Model struct {
 	name      string
 	deviceID  string
+	config    Config
 	session   *ort.DynamicAdvancedSession
 	allocator *Allocator
 }
 
-func NewModel(name, deviceID string) *Model {
+func NewModel(name string, deviceID string, config Config) *Model {
 	return &Model{
 		name:     name,
 		deviceID: deviceID,
+		config:   config,
 	}
 }
 
@@ -66,7 +60,7 @@ func (m *Model) Init() error {
 		return err
 	}
 
-	m.allocator = NewAllocator(true)
+	m.allocator = NewAllocator(m.config, true)
 
 	var options *ort.SessionOptions
 
@@ -110,7 +104,7 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 		return nil, errors.New("empty prompt")
 	}
 
-	if int64(len(prompt))+steps > nPositions {
+	if int64(len(prompt))+steps > int64(m.config.nPositions) {
 		return nil, errors.New("sequence length exceeds context limit")
 	}
 
@@ -159,13 +153,13 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 
 func (m *Model) logits(output ort.Value) [][]float32 {
 	d := output.(*ort.Tensor[float32]).GetData()
-	n := len(d) / vocabSize
+	n := len(d) / m.config.vocabSize
 	l := make([][]float32, n)
 
 	for i := range n {
-		s := i * vocabSize
+		s := i * m.config.vocabSize
 
-		l[i] = d[s : s+vocabSize : s+vocabSize]
+		l[i] = d[s : s+m.config.vocabSize : s+m.config.vocabSize]
 	}
 
 	return l
