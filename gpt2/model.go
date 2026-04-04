@@ -2,7 +2,6 @@ package gpt2
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"os"
 	"slices"
@@ -21,11 +20,10 @@ const (
 )
 
 type Model struct {
-	name        string
-	deviceID    string
-	session     *ort.DynamicAdvancedSession
-	inputNames  []string
-	outputNames []string
+	name      string
+	deviceID  string
+	session   *ort.DynamicAdvancedSession
+	allocator *Allocator
 }
 
 func NewModel(name, deviceID string) *Model {
@@ -68,19 +66,7 @@ func (m *Model) Init() error {
 		return err
 	}
 
-	inputNames := make([]string, 0, 3+2*nLayers)
-	outputNames := make([]string, 0, 1+2*nLayers)
-
-	inputNames = append(inputNames, "input_ids", "position_ids", "attention_mask")
-	outputNames = append(outputNames, "logits")
-
-	for i := range nLayers {
-		inputNames = append(inputNames, fmt.Sprintf("past_key_values.%d.key", i), fmt.Sprintf("past_key_values.%d.value", i))
-		outputNames = append(outputNames, fmt.Sprintf("present.%d.key", i), fmt.Sprintf("present.%d.value", i))
-	}
-
-	m.inputNames = inputNames
-	m.outputNames = outputNames
+	m.allocator = NewAllocator(true)
 
 	var options *ort.SessionOptions
 
@@ -104,7 +90,7 @@ func (m *Model) Init() error {
 		}
 	}
 
-	if s, err := ort.NewDynamicAdvancedSession(m.name, m.inputNames, m.outputNames, options); err != nil {
+	if s, err := ort.NewDynamicAdvancedSession(m.name, m.allocator.InputNames(), m.allocator.OutputNames(), options); err != nil {
 		return err
 	} else {
 		m.session = s
@@ -114,6 +100,8 @@ func (m *Model) Init() error {
 }
 
 func (m *Model) Destroy() error {
+	m.allocator.Destroy()
+
 	return ort.DestroyEnvironment()
 }
 
@@ -126,22 +114,19 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 		return nil, errors.New("sequence length exceeds context limit")
 	}
 
-	n := int64(len(prompt))
-	r := make([]int64, steps)
-
-	outputs := initCache()
-
-	if o, err := m.forward(prompt, 0, outputs); err != nil {
-		defer destroyValues(outputs)
-
+	if err := m.allocator.Init(prompt); err != nil {
 		return nil, err
-	} else {
-		destroyValues(outputs)
-
-		outputs = o
 	}
 
+	if err := m.forward(m.allocator); err != nil {
+		return nil, err
+	}
+
+	r := make([]int64, steps)
+
 	for step := range steps {
+		_, outputs := m.allocator.Outputs()
+
 		l := m.logits(outputs[0])
 
 		if logits != nil {
@@ -152,26 +137,22 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 
 		r[step] = next
 
-		_ = outputs[0].Destroy()
-
-		if o, err := m.forward([]int64{next}, n+step, outputs[1:]); err != nil {
-			defer destroyValues(outputs[1:])
-
+		if err := m.allocator.Step(next); err != nil {
 			return nil, err
-		} else {
-			destroyValues(outputs[1:])
+		}
 
-			outputs = o
+		if err := m.forward(m.allocator); err != nil {
+			return nil, err
 		}
 	}
 
 	if logits != nil {
-		for _, l := range m.logits(outputs[0]) {
+		_, outVals := m.allocator.Outputs()
+
+		for _, l := range m.logits(outVals[0]) {
 			*logits = append(*logits, l)
 		}
 	}
-
-	_ = outputs[0].Destroy()
 
 	return r, nil
 }
@@ -196,159 +177,33 @@ func (m *Model) sample(logits []float32) int64 {
 	return int64(idx[0])
 }
 
-func (m *Model) forward(tokens []int64, start int64, cache []ort.Value) ([]ort.Value, error) {
+func (m *Model) forward(alloc *Allocator) error {
 	var binding *ort.IoBinding
 
 	if b, err := m.session.CreateIoBinding(); err != nil {
-		return nil, err
+		return err
 	} else {
 		binding = b
 
 		defer binding.Destroy()
 	}
 
-	var inputs []ort.Value
-	var outputs []ort.Value
+	inputNames, inputs := alloc.Inputs()
+	outputNames, outputs := alloc.Outputs()
 
-	if in, err := initInputs(tokens, start); err != nil {
-		return nil, err
-	} else {
-		inputs = in
-	}
-
-	defer destroyValues(inputs)
-
-	if out, err := initOutputs(tokens, start); err != nil {
-		return nil, err
-	} else {
-		outputs = out
-	}
-
-	inputs = append(inputs, cache...)
-
-	if len(inputs) != len(m.inputNames) {
-		panic("unexpected input length")
-	}
-
-	for i, name := range m.inputNames {
+	for i, name := range inputNames {
 		if err := binding.BindInput(name, inputs[i]); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	var ok bool
-
-	defer func() {
-		if !ok {
-			destroyValues(outputs)
-		}
-	}()
-
-	if len(outputs) != len(m.outputNames) {
-		panic("unexpected output length")
-	}
-
-	for i, name := range m.outputNames {
+	for i, name := range outputNames {
 		if err := binding.BindOutput(name, outputs[i]); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	if err := m.session.RunWithBinding(binding); err != nil {
-		return nil, err
-	}
-
-	ok = true
-
-	return outputs, nil
-}
-
-func destroyValues(values []ort.Value) {
-	for _, v := range values {
-		_ = v.Destroy()
-	}
-}
-
-func initCache() []ort.Value {
-	values := make([]ort.Value, 0, 2*nLayers)
-	shape := []int64{1, int64(nHeads), 0, int64(headDim)}
-
-	for range nLayers {
-		kTensor, _ := ort.NewEmptyTensor[float32](shape)
-		vTensor, _ := ort.NewEmptyTensor[float32](shape)
-
-		values = append(values, ort.Value(kTensor), ort.Value(vTensor))
-	}
-
-	return values
-}
-
-func initInputs(tokens []int64, start int64) ([]ort.Value, error) {
-	var inputIDs *ort.Tensor[int64]
-	var positionIDs *ort.Tensor[int64]
-	var attentionMask *ort.Tensor[int64]
-
-	inputsShape := []int64{1, int64(len(tokens))}
-	inputsData := tokens
-
-	if t, err := ort.NewTensor[int64](inputsShape, inputsData); err != nil {
-		return nil, err
-	} else {
-		inputIDs = t
-	}
-
-	positionsShape := []int64{1, int64(len(tokens))}
-	positionsData := make([]int64, len(tokens))
-
-	for i := range len(tokens) {
-		positionsData[i] = start + int64(i)
-	}
-
-	if p, err := ort.NewTensor[int64](positionsShape, positionsData); err != nil {
-		return nil, err
-	} else {
-		positionIDs = p
-	}
-
-	maskData := make([]int64, start+int64(len(tokens)))
-	maskShape := []int64{1, start + int64(len(tokens))}
-
-	for i := range maskData {
-		maskData[i] = 1
-	}
-
-	if m, err := ort.NewTensor[int64](maskShape, maskData); err != nil {
-		return nil, err
-	} else {
-		attentionMask = m
-	}
-
-	inputs := []ort.Value{ort.Value(inputIDs), ort.Value(positionIDs), ort.Value(attentionMask)}
-
-	return inputs, nil
-}
-
-func initOutputs(tokens []int64, start int64) ([]ort.Value, error) {
-	outputs := make([]ort.Value, 0, 1+2*nLayers)
-
-	logits, err := ort.NewEmptyTensor[float32]([]int64{1, int64(len(tokens)), int64(vocabSize)})
-
-	if err != nil {
-		return nil, err
-	}
-
-	outputs = append(outputs, ort.Value(logits))
-
-	shape := []int64{1, int64(nHeads), start + int64(len(tokens)), int64(headDim)}
-
-	for range nLayers {
-		kTensor, _ := ort.NewEmptyTensor[float32](shape)
-		vTensor, _ := ort.NewEmptyTensor[float32](shape)
-
-		outputs = append(outputs, ort.Value(kTensor), ort.Value(vTensor))
-	}
-
-	return outputs, nil
+	return m.session.RunWithBinding(binding)
 }
 
 func softmax(logits []float32) []float32 {
