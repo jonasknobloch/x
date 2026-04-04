@@ -7,19 +7,21 @@ import (
 )
 
 type Allocator struct {
-	config      Config
-	step        int64
-	inputNames  []string
-	outputNames []string
-	values      map[string]ort.Value
-	withCache   bool
+	config       Config
+	step         int64
+	inputNames   []string
+	outputNames  []string
+	values       map[string]ort.Value
+	withCache    bool
+	withLogProbs bool
 }
 
-func NewAllocator(config Config, withCache bool) *Allocator {
+func NewAllocator(config Config, withCache bool, withLogProbs bool) *Allocator {
 	return &Allocator{
-		config:    config,
-		values:    make(map[string]ort.Value),
-		withCache: withCache,
+		config:       config,
+		values:       make(map[string]ort.Value),
+		withCache:    withCache,
+		withLogProbs: withLogProbs,
 	}
 }
 
@@ -38,9 +40,19 @@ func (a *Allocator) InputNames() []string {
 }
 
 func (a *Allocator) OutputNames() []string {
-	names := make([]string, 0, 1+2*a.config.nLayers)
+	capacity := 1 + 2*a.config.nLayers
+
+	if a.withLogProbs {
+		capacity++
+	}
+
+	names := make([]string, 0, capacity)
 
 	names = append(names, "logits")
+
+	if a.withLogProbs {
+		names = append(names, "log_probs")
+	}
 
 	if a.withCache {
 		for i := range a.config.nLayers {
@@ -129,6 +141,10 @@ func (a *Allocator) initInputs(tokens []int64) error {
 func (a *Allocator) initOutputs(tokens []int64) error {
 	capacity := 1
 
+	if a.withLogProbs {
+		capacity++
+	}
+
 	if a.withCache {
 		capacity += 2 * a.config.nLayers
 	}
@@ -140,6 +156,14 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 	}
 
 	names = append(names, "logits")
+
+	if a.withLogProbs {
+		if err := a.logProbs(tokens, false); err != nil {
+			return err
+		}
+
+		names = append(names, "log_probs")
+	}
 
 	if !a.withCache {
 		a.outputNames = names
@@ -183,6 +207,12 @@ func (a *Allocator) Step(token int64) error {
 
 	if err := a.logits(tokens, true); err != nil {
 		return err
+	}
+
+	if a.withLogProbs {
+		if err := a.logProbs(tokens, true); err != nil {
+			return err
+		}
 	}
 
 	for i := range int64(a.config.nLayers) {
@@ -342,6 +372,28 @@ func (a *Allocator) logits(tokens []int64, force bool) error {
 	}
 
 	shape := []int64{1, int64(len(tokens)), int64(a.config.vocabSize)}
+
+	if t, err := ort.NewEmptyTensor[float32](shape); err != nil {
+		return err
+	} else {
+		a.values[name] = ort.Value(t)
+	}
+
+	return nil
+}
+
+func (a *Allocator) logProbs(tokens []int64, force bool) error {
+	const name = "log_probs"
+
+	if _, ok := a.values[name]; ok {
+		if !force {
+			panic("log_probs already allocated")
+		}
+
+		_ = a.values[name].Destroy()
+	}
+
+	shape := []int64{1, int64(len(tokens)) - 1}
 
 	if t, err := ort.NewEmptyTensor[float32](shape); err != nil {
 		return err
