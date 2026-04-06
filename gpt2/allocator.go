@@ -26,7 +26,13 @@ func NewAllocator(config Config, withCache bool, withLogProbs bool) *Allocator {
 }
 
 func (a *Allocator) InputNames() []string {
-	names := make([]string, 0, 3+2*a.config.nLayers)
+	capacity := 3
+
+	if a.withCache {
+		capacity += 2 * a.config.nLayers
+	}
+
+	names := make([]string, 0, capacity)
 
 	names = append(names, "input_ids", "position_ids", "attention_mask")
 
@@ -40,7 +46,11 @@ func (a *Allocator) InputNames() []string {
 }
 
 func (a *Allocator) OutputNames() []string {
-	capacity := 2*a.config.nLayers + 1
+	capacity := 1
+
+	if a.withCache {
+		capacity += 2 * a.config.nLayers
+	}
 
 	names := make([]string, 0, capacity)
 
