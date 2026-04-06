@@ -21,11 +21,19 @@ func perplexity() {
 	m := model()
 	t := tokenizer()
 
-	e := llm.NewEvaluator(m, t, func(job llm.Job, logits [][]float32, tokens []int) pplResult {
-		p, n := llm.NegLogLikelihood(logits, tokens)
+	e := llm.NewEvaluator(m, t, func(job llm.Job, logProbs []float32, tokens []int) pplResult {
+		total := float64(0)
+
+		n := 0
+
+		for _, p := range logProbs {
+			total -= float64(p)
+
+			n++
+		}
 
 		return pplResult{
-			v: p,
+			v: total,
 			n: n,
 		}
 	})

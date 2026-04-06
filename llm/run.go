@@ -125,13 +125,13 @@ func (e *Evaluator[R]) execute(j *batch, device int) {
 
 	m := e.models[device]
 
-	logits := make([][]float32, 0, len(job.Tokens))
+	logProbs := make([]float32, 0, len(job.Tokens)-1)
 
-	if _, err := m.Generate(job.Tokens, 0, &logits); err != nil {
+	if err := m.Score(job.Tokens, &logProbs); err != nil {
 		panic(err) // TODO handle
 	}
 
-	l := logits[job.Seen-1 : len(logits)-1]
+	l := logProbs[job.Seen-1:]
 	t := toInt(job.Tokens[job.Seen:])
 
 	r := e.callback(job, l, t)

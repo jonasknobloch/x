@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"math"
-	"slices"
 
 	_ "github.com/duckdb/duckdb-go/v2"
 
@@ -27,16 +25,14 @@ func logprobs() {
 	m := model()
 	t := tokenizer()
 
-	e := llm.NewEvaluator(m, t, func(j llm.Job, logits [][]float32, tokens []int) logProbs {
-		probs := selectLogProbs(logits, tokens)
-
+	e := llm.NewEvaluator(m, t, func(j llm.Job, l []float32, tokens []int) logProbs {
 		r := make(logProbs, len(tokens))
 
 		for i, token := range tokens {
 			r[i] = logProb{
 				document: j.Document,
 				token:    token,
-				value:    probs[i],
+				value:    l[i],
 				offset:   i,
 			}
 		}
@@ -112,42 +108,4 @@ func insert(stmt *sql.Stmt, prob logProb) error {
 	}
 
 	return nil
-}
-
-func selectLogProbs(logits [][]float32, tokens []int) []float32 {
-	if len(logits) != len(tokens) {
-		panic("length mismatch")
-	}
-
-	r := make([]float32, len(tokens))
-
-	for i, token := range tokens {
-		logprobs := logSoftmax(logits[i])
-
-		r[i] = logprobs[token]
-	}
-
-	return r
-}
-
-func logSoftmax(logits []float32) []float32 {
-	m := slices.Max(logits)
-
-	s := float32(0.0)
-	r := make([]float32, len(logits))
-
-	for i, v := range logits {
-		e := float32(math.Exp(float64(v - m)))
-
-		r[i] = v
-		s += e
-	}
-
-	lse := float32(math.Log(float64(s))) + m
-
-	for i := range r {
-		r[i] -= lse
-	}
-
-	return r
 }

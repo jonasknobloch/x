@@ -21,10 +21,10 @@ type Evaluator[R any] struct {
 	jobs    chan batch
 	results chan R
 
-	callback func(job Job, logits [][]float32, tokens []int) R
+	callback func(job Job, logProbs []float32, tokens []int) R
 }
 
-func NewEvaluator[R any](model Causal, tokenizer Tokenizer, callback func(job Job, logits [][]float32, tokens []int) R) *Evaluator[R] {
+func NewEvaluator[R any](model Causal, tokenizer Tokenizer, callback func(job Job, logProbs []float32, tokens []int) R) *Evaluator[R] {
 	return &Evaluator[R]{
 		models:     []Causal{model}, // TODO multiple devices
 		tokenizer:  tokenizer,

@@ -34,7 +34,7 @@ func data() *dataset.ParquetReader {
 }
 
 func model() *gpt2.Model {
-	m := gpt2.NewModel("gpt2/models/base/model.onnx", "0", gpt2.NewDefaultConfig(), true, true, false)
+	m := gpt2.NewModel("gpt2/models/base/model_eval.onnx", "0", gpt2.NewDefaultConfig(), false, false, true)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
