@@ -110,6 +110,10 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 		panic("generate requires logits output")
 	}
 
+	if steps > 0 && !m.withCache {
+		panic("generate with steps > 0 requires cache")
+	}
+
 	if len(prompt) == 0 {
 		return nil, errors.New("empty prompt")
 	}
