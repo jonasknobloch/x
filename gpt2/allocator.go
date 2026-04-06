@@ -256,6 +256,16 @@ func (a *Allocator) Outputs() ([]string, []ort.Value) {
 	return a.outputNames, vals
 }
 
+func (a *Allocator) Value(name string) ort.Value {
+	v, ok := a.values[name]
+
+	if !ok {
+		panic("unknown value: " + name)
+	}
+
+	return v
+}
+
 func (a *Allocator) inputIDs(tokens []int64, force bool) error {
 	const name = "input_ids"
 

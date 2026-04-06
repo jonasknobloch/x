@@ -127,9 +127,7 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 	r := make([]int64, steps)
 
 	for step := range steps {
-		_, outputs := m.allocator.Outputs()
-
-		l := m.logits(outputs[0])
+		l := m.logits(m.allocator.Value("logits"))
 
 		if logits != nil {
 			*logits = append(*logits, l...)
@@ -149,9 +147,7 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 	}
 
 	if logits != nil {
-		_, outVals := m.allocator.Outputs()
-
-		for _, l := range m.logits(outVals[0]) {
+		for _, l := range m.logits(m.allocator.Value("logits")) {
 			*logits = append(*logits, l)
 		}
 	}
@@ -173,9 +169,7 @@ func (m *Model) Score(tokens []int64, logProbs *[]float32) error {
 	}
 
 	if logProbs != nil {
-		_, outputs := m.allocator.Outputs()
-
-		d := outputs[0].(*ort.Tensor[float32]).GetData()
+		d := m.allocator.Value("log_probs").(*ort.Tensor[float32]).GetData()
 
 		*logProbs = append(*logProbs, d...)
 	}
