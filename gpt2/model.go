@@ -60,12 +60,6 @@ func IntraOpNumThreads() int {
 }
 
 func (m *Model) Init() error {
-	ort.SetSharedLibraryPath(SharedLibraryPath())
-
-	if err := ort.InitializeEnvironment(); err != nil {
-		return err
-	}
-
 	m.allocator = NewAllocator(m.config, m.withCache, m.withLogits, m.withLogProbs)
 
 	var options *ort.SessionOptions
@@ -99,10 +93,8 @@ func (m *Model) Init() error {
 	return nil
 }
 
-func (m *Model) Destroy() error {
+func (m *Model) Destroy() {
 	m.allocator.Destroy()
-
-	return ort.DestroyEnvironment()
 }
 
 func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]int64, error) {

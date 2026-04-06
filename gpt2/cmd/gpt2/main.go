@@ -10,12 +10,20 @@ import (
 )
 
 func main() {
+	if err := gpt2.InitializeEnvironment(); err != nil {
+		log.Fatal(err)
+	}
+
 	prompt := []int64{464, 2068, 7586}
 
 	generate(prompt) // [-13.483142 -11.277906]
 	score(prompt)    // [-13.48314 -11.277912]
 
 	_ = prompt
+
+	if err := gpt2.DestroyEnvironment(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func generate(prompt []int64) {
@@ -35,9 +43,7 @@ func generate(prompt []int64) {
 
 	fmt.Println(selectLogProbs(logits[:len(logits)-1], prompt[1:]))
 
-	if err := m.Destroy(); err != nil {
-		log.Fatal(err)
-	}
+	m.Destroy()
 }
 
 func score(prompt []int64) {
@@ -55,9 +61,7 @@ func score(prompt []int64) {
 
 	fmt.Println(logProbs)
 
-	if err := m.Destroy(); err != nil {
-		log.Fatal(err)
-	}
+	m.Destroy()
 }
 
 func selectLogProbs(logits [][]float32, tokens []int64) []float32 {

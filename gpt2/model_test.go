@@ -9,6 +9,20 @@ import (
 	"testing"
 )
 
+func TestMain(m *testing.M) {
+	if err := InitializeEnvironment(); err != nil {
+		log.Fatal(err)
+	}
+
+	exit := m.Run()
+
+	if err := DestroyEnvironment(); err != nil {
+		log.Fatal(err)
+	}
+
+	os.Exit(exit)
+}
+
 func fromModel() []float32 {
 	prompt := []int64{464, 2068, 7586, 21831, 18045, 625, 262, 16931, 3290}
 

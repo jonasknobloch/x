@@ -9,8 +9,16 @@ import (
 )
 
 func main() {
+	if err := gpt2.InitializeEnvironment(); err != nil {
+		log.Fatal(err)
+	}
+
 	perplexity()
 	// logprobs()
+
+	if err := gpt2.DestroyEnvironment(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func data() *dataset.ParquetReader {
