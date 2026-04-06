@@ -13,14 +13,16 @@ type Allocator struct {
 	outputNames  []string
 	values       map[string]ort.Value
 	withCache    bool
+	withLogits   bool
 	withLogProbs bool
 }
 
-func NewAllocator(config Config, withCache bool, withLogProbs bool) *Allocator {
+func NewAllocator(config Config, withCache bool, withLogits bool, withLogProbs bool) *Allocator {
 	return &Allocator{
 		config:       config,
 		values:       make(map[string]ort.Value),
 		withCache:    withCache,
+		withLogits:   withLogits,
 		withLogProbs: withLogProbs,
 	}
 }
@@ -46,7 +48,15 @@ func (a *Allocator) InputNames() []string {
 }
 
 func (a *Allocator) OutputNames() []string {
-	capacity := 1
+	capacity := 0
+
+	if a.withLogits {
+		capacity++
+	}
+
+	if a.withLogProbs {
+		capacity++
+	}
 
 	if a.withCache {
 		capacity += 2 * a.config.nLayers
@@ -54,10 +64,12 @@ func (a *Allocator) OutputNames() []string {
 
 	names := make([]string, 0, capacity)
 
+	if a.withLogits {
+		names = append(names, "logits")
+	}
+
 	if a.withLogProbs {
 		names = append(names, "log_probs")
-	} else {
-		names = append(names, "logits")
 	}
 
 	if a.withCache {
@@ -145,7 +157,15 @@ func (a *Allocator) initInputs(tokens []int64) error {
 }
 
 func (a *Allocator) initOutputs(tokens []int64) error {
-	capacity := 1
+	capacity := 0
+
+	if a.withLogits {
+		capacity++
+	}
+
+	if a.withLogProbs {
+		capacity++
+	}
 
 	if a.withCache {
 		capacity += 2 * a.config.nLayers
@@ -153,18 +173,20 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 
 	names := make([]string, 0, capacity)
 
+	if a.withLogits {
+		if err := a.logits(tokens, false); err != nil {
+			return err
+		}
+
+		names = append(names, "logits")
+	}
+
 	if a.withLogProbs {
 		if err := a.logProbs(tokens, false); err != nil {
 			return err
 		}
 
 		names = append(names, "log_probs")
-	} else {
-		if err := a.logits(tokens, false); err != nil {
-			return err
-		}
-
-		names = append(names, "logits")
 	}
 
 	if !a.withCache {
@@ -207,12 +229,14 @@ func (a *Allocator) Step(token int64) error {
 		return err
 	}
 
-	if a.withLogProbs {
-		if err := a.logProbs(tokens, true); err != nil {
+	if a.withLogits {
+		if err := a.logits(tokens, true); err != nil {
 			return err
 		}
-	} else {
-		if err := a.logits(tokens, true); err != nil {
+	}
+
+	if a.withLogProbs {
+		if err := a.logProbs(tokens, true); err != nil {
 			return err
 		}
 	}

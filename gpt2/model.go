@@ -16,17 +16,19 @@ type Model struct {
 	deviceID     string
 	config       Config
 	withCache    bool
+	withLogits   bool
 	withLogProbs bool
 	session      *ort.DynamicAdvancedSession
 	allocator    *Allocator
 }
 
-func NewModel(name string, deviceID string, config Config, withCache bool, withLogProbs bool) *Model {
+func NewModel(name string, deviceID string, config Config, withCache bool, withLogits bool, withLogProbs bool) *Model {
 	return &Model{
 		name:         name,
 		deviceID:     deviceID,
 		config:       config,
 		withCache:    withCache,
+		withLogits:   withLogits,
 		withLogProbs: withLogProbs,
 	}
 }
@@ -64,7 +66,7 @@ func (m *Model) Init() error {
 		return err
 	}
 
-	m.allocator = NewAllocator(m.config, m.withCache, m.withLogProbs)
+	m.allocator = NewAllocator(m.config, m.withCache, m.withLogits, m.withLogProbs)
 
 	var options *ort.SessionOptions
 
@@ -104,8 +106,8 @@ func (m *Model) Destroy() error {
 }
 
 func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]int64, error) {
-	if m.withLogProbs {
-		panic("generate called on eval model")
+	if !m.withLogits {
+		panic("generate requires logits output")
 	}
 
 	if len(prompt) == 0 {
@@ -157,7 +159,7 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 
 func (m *Model) Score(tokens []int64, logProbs *[]float32) error {
 	if !m.withLogProbs {
-		panic("score called on default model")
+		panic("score requires log_probs output")
 	}
 
 	if err := m.allocator.Init(tokens); err != nil {
