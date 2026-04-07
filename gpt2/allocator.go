@@ -69,7 +69,7 @@ func (a *Allocator) OutputNames() []string {
 	}
 
 	if a.withLogProbs {
-		names = append(names, "log_probs")
+		names = append(names, "token_logprobs")
 	}
 
 	if a.withCache {
@@ -186,7 +186,7 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 			return err
 		}
 
-		names = append(names, "log_probs")
+		names = append(names, "token_logprobs")
 	}
 
 	if !a.withCache {
@@ -419,11 +419,11 @@ func (a *Allocator) logits(tokens []int64, force bool) error {
 }
 
 func (a *Allocator) logProbs(tokens []int64, force bool) error {
-	const name = "log_probs"
+	const name = "token_logprobs"
 
 	if _, ok := a.values[name]; ok {
 		if !force {
-			panic("log_probs already allocated")
+			panic("token_logprobs already allocated")
 		}
 
 		_ = a.values[name].Destroy()

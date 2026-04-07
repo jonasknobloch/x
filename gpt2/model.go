@@ -155,7 +155,7 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 
 func (m *Model) Score(tokens []int64, logProbs *[]float32) error {
 	if !m.withLogProbs {
-		panic("score requires log_probs output")
+		panic("score requires token_logprobs output")
 	}
 
 	if err := m.allocator.Init(tokens); err != nil {
@@ -167,7 +167,7 @@ func (m *Model) Score(tokens []int64, logProbs *[]float32) error {
 	}
 
 	if logProbs != nil {
-		d := m.allocator.Value("log_probs").(*ort.Tensor[float32]).GetData()
+		d := m.allocator.Value("token_logprobs").(*ort.Tensor[float32]).GetData()
 
 		*logProbs = append(*logProbs, d...)
 	}
