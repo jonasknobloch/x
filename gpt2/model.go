@@ -60,7 +60,7 @@ func IntraOpNumThreads() int {
 }
 
 func (m *Model) Init() error {
-	m.allocator = NewAllocator(m.config, m.withCache, m.withLogits, m.withLogProbs)
+	m.allocator = NewAllocator(m.config, 1, m.withCache, m.withLogits, m.withLogProbs)
 
 	var options *ort.SessionOptions
 
@@ -153,10 +153,12 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 	return r, nil
 }
 
-func (m *Model) Score(tokens []int64, logProbs *[]float32) error {
+func (m *Model) Score(tokens []int64, batchSize int, logProbs *[]float32) error {
 	if !m.withLogProbs {
 		panic("score requires token_logprobs output")
 	}
+
+	m.allocator.SetBatchSize(batchSize)
 
 	if err := m.allocator.Init(tokens); err != nil {
 		return err

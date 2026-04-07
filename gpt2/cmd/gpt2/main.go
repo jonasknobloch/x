@@ -55,7 +55,7 @@ func score(prompt []int64) {
 
 	logProbs := make([]float32, 0, 2)
 
-	if err := m.Score(prompt, &logProbs); err != nil {
+	if err := m.Score(prompt, 1, &logProbs); err != nil {
 		log.Fatal(err)
 	}
 

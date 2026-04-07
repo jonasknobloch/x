@@ -113,30 +113,34 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 }
 
 func (e *Evaluator[R]) execute(j *batch, device int) {
-	if j.Size() != 1 {
-		panic("unimplemented")
-	}
+	b := j.Size()
 
-	job := j.jobs[0]
+	s := len(j.jobs[0].Tokens)
 
-	if job.Seen < 1 {
-		panic("empty context")
+	tokens := make([]int64, b*s)
+
+	for i, job := range j.jobs {
+		copy(tokens[i*s:], job.Tokens)
 	}
 
 	m := e.models[device]
 
-	logProbs := make([]float32, 0, len(job.Tokens)-1)
+	logProbs := make([]float32, 0, b*(s-1))
 
-	if err := m.Score(job.Tokens, &logProbs); err != nil {
+	if err := m.Score(tokens, b, &logProbs); err != nil {
 		panic(err) // TODO handle
 	}
 
-	l := logProbs[job.Seen-1:]
-	t := toInt(job.Tokens[job.Seen:])
+	for i, job := range j.jobs {
+		if job.Seen < 1 {
+			panic("empty context")
+		}
 
-	r := e.callback(job, l, t)
+		l := logProbs[i*(s-1)+job.Seen-1 : (i+1)*(s-1)]
+		t := toInt(job.Tokens[job.Seen:])
 
-	e.results <- r
+		r := e.callback(job, l, t)
 
-	return
+		e.results <- r
+	}
 }

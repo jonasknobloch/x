@@ -2,5 +2,5 @@ package llm
 
 type Causal interface {
 	Generate(prompt []int64, steps int64, logits *[][]float32) ([]int64, error)
-	Score(tokens []int64, logProbs *[]float32) error
+	Score(tokens []int64, batchSize int, logProbs *[]float32) error
 }
