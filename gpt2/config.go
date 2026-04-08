@@ -8,7 +8,7 @@ type Config struct {
 	nPositions int
 }
 
-func NewDefaultConfig() Config {
+func DefaultConfig() Config {
 	return Config{
 		vocabSize:  50257,
 		nLayers:    12,

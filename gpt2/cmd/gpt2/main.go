@@ -27,7 +27,7 @@ func main() {
 }
 
 func generate(prompt []int64) {
-	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_cache.onnx", "0", gpt2.NewDefaultConfig().WithVocabSize(8193), true, true, false)
+	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_cache.onnx", "0", gpt2.DefaultConfig().WithVocabSize(8193), true, true, false)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
@@ -47,7 +47,7 @@ func generate(prompt []int64) {
 }
 
 func score(prompt []int64) {
-	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_eval.onnx", "0", gpt2.NewDefaultConfig().WithVocabSize(8193), false, false, true)
+	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_eval.onnx", "0", gpt2.DefaultConfig().WithVocabSize(8193), false, false, true)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
