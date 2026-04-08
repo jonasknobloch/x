@@ -8,6 +8,11 @@ import (
 	"go.jknobloc.com/x/dataset"
 )
 
+type EvaluatorConfig struct {
+	BatchSize  int
+	NumWorkers int
+}
+
 type Evaluator[R any] struct {
 	models    []Causal
 	tokenizer Tokenizer
@@ -24,12 +29,12 @@ type Evaluator[R any] struct {
 	callback func(job Job, logProbs []float32, tokens []int) R
 }
 
-func NewEvaluator[R any](model Causal, tokenizer Tokenizer, callback func(job Job, logProbs []float32, tokens []int) R) *Evaluator[R] {
+func NewEvaluator[R any](model Causal, tokenizer Tokenizer, callback func(job Job, logProbs []float32, tokens []int) R, cfg EvaluatorConfig) *Evaluator[R] {
 	return &Evaluator[R]{
 		models:     []Causal{model}, // TODO multiple devices
 		tokenizer:  tokenizer,
-		batchSize:  1, // TODO arg
-		numWorkers: 4, // TODO arg
+		batchSize:  cfg.BatchSize,
+		numWorkers: cfg.NumWorkers,
 		jobs:       make(chan batch, 1024),
 		results:    make(chan R, 1024),
 		callback:   callback,

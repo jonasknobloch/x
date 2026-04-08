@@ -36,6 +36,9 @@ func perplexity() {
 			v: total,
 			n: n,
 		}
+	}, llm.EvaluatorConfig{
+		BatchSize:  1,
+		NumWorkers: 4,
 	})
 
 	total := float64(0)

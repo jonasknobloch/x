@@ -38,6 +38,9 @@ func logprobs() {
 		}
 
 		return r
+	}, llm.EvaluatorConfig{
+		BatchSize:  1,
+		NumWorkers: 4,
 	})
 
 	var insertStmt *sql.Stmt
