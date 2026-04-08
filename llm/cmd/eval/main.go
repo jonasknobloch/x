@@ -34,7 +34,13 @@ func data() *dataset.ParquetReader {
 }
 
 func model() *gpt2.Model {
-	m := gpt2.NewModel("gpt2/models/base/model_eval.onnx", "0", gpt2.DefaultConfig(), false, false, true)
+	opts := gpt2.Options{
+		WithCache:    false,
+		WithLogits:   false,
+		WithLogProbs: true,
+	}
+
+	m := gpt2.NewModel("gpt2/models/base/model_eval.onnx", "0", gpt2.DefaultConfig(), opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)

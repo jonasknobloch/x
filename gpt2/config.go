@@ -8,6 +8,12 @@ type Config struct {
 	NumPositions int
 }
 
+type Options struct {
+	WithCache    bool
+	WithLogits   bool
+	WithLogProbs bool
+}
+
 func DefaultConfig() Config {
 	return Config{
 		VocabSize:    50257,

@@ -15,21 +15,17 @@ type Model struct {
 	name         string
 	deviceID     string
 	config       Config
-	withCache    bool
-	withLogits   bool
-	withLogProbs bool
+	options      Options
 	session      *ort.DynamicAdvancedSession
 	allocator    *Allocator
 }
 
-func NewModel(name string, deviceID string, cfg Config, withCache bool, withLogits bool, withLogProbs bool) *Model {
+func NewModel(name string, deviceID string, cfg Config, opts Options) *Model {
 	return &Model{
 		name:         name,
 		deviceID:     deviceID,
 		config:       cfg,
-		withCache:    withCache,
-		withLogits:   withLogits,
-		withLogProbs: withLogProbs,
+		options:      opts,
 	}
 }
 
@@ -60,7 +56,7 @@ func IntraOpNumThreads() int {
 }
 
 func (m *Model) Init() error {
-	m.allocator = NewAllocator(m.config, 1, m.withCache, m.withLogits, m.withLogProbs)
+	m.allocator = NewAllocator(m.config, m.options, 1)
 
 	var options *ort.SessionOptions
 
@@ -98,11 +94,11 @@ func (m *Model) Destroy() {
 }
 
 func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]int64, error) {
-	if !m.withLogits {
+	if !m.options.WithLogits {
 		panic("generate requires logits output")
 	}
 
-	if steps > 0 && !m.withCache {
+	if steps > 0 && !m.options.WithCache {
 		panic("generate with steps > 0 requires cache")
 	}
 
@@ -154,7 +150,7 @@ func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]in
 }
 
 func (m *Model) Score(tokens []int64, batchSize int, logProbs *[]float32) error {
-	if !m.withLogProbs {
+	if !m.options.WithLogProbs {
 		panic("score requires token_logprobs output")
 	}
 

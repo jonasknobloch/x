@@ -8,32 +8,28 @@ import (
 
 type Allocator struct {
 	config         Config
+	options        Options
 	batchSize      int
 	sequenceLength int64
 	step           int64
 	inputNames     []string
 	outputNames    []string
 	values         map[string]ort.Value
-	withCache      bool
-	withLogits     bool
-	withLogProbs   bool
 }
 
-func NewAllocator(cfg Config, batchSize int, withCache bool, withLogits bool, withLogProbs bool) *Allocator {
+func NewAllocator(cfg Config, opts Options, batchSize int) *Allocator {
 	return &Allocator{
 		config:       cfg,
+		options:      opts,
 		batchSize:    batchSize,
 		values:       make(map[string]ort.Value),
-		withCache:    withCache,
-		withLogits:   withLogits,
-		withLogProbs: withLogProbs,
 	}
 }
 
 func (a *Allocator) InputNames() []string {
 	capacity := 3
 
-	if a.withCache {
+	if a.options.WithCache {
 		capacity += 2 * a.config.NumLayers
 	}
 
@@ -41,7 +37,7 @@ func (a *Allocator) InputNames() []string {
 
 	names = append(names, "input_ids", "position_ids", "attention_mask")
 
-	if a.withCache {
+	if a.options.WithCache {
 		for i := range a.config.NumLayers {
 			names = append(names, fmt.Sprintf("past_key_values.%d.key", i), fmt.Sprintf("past_key_values.%d.value", i))
 		}
@@ -53,29 +49,29 @@ func (a *Allocator) InputNames() []string {
 func (a *Allocator) OutputNames() []string {
 	capacity := 0
 
-	if a.withLogits {
+	if a.options.WithLogits {
 		capacity++
 	}
 
-	if a.withLogProbs {
+	if a.options.WithLogProbs {
 		capacity++
 	}
 
-	if a.withCache {
+	if a.options.WithCache {
 		capacity += 2 * a.config.NumLayers
 	}
 
 	names := make([]string, 0, capacity)
 
-	if a.withLogits {
+	if a.options.WithLogits {
 		names = append(names, "logits")
 	}
 
-	if a.withLogProbs {
+	if a.options.WithLogProbs {
 		names = append(names, "token_logprobs")
 	}
 
-	if a.withCache {
+	if a.options.WithCache {
 		for i := range a.config.NumLayers {
 			names = append(names, fmt.Sprintf("present.%d.key", i), fmt.Sprintf("present.%d.value", i))
 		}
@@ -119,7 +115,7 @@ func (a *Allocator) Init(tokens []int64) error {
 func (a *Allocator) initInputs(tokens []int64) error {
 	capacity := 3
 
-	if a.withCache {
+	if a.options.WithCache {
 		capacity += 2 * a.config.NumLayers
 	}
 
@@ -143,7 +139,7 @@ func (a *Allocator) initInputs(tokens []int64) error {
 
 	names = append(names, "attention_mask")
 
-	if !a.withCache {
+	if !a.options.WithCache {
 		a.inputNames = names
 
 		return nil
@@ -171,21 +167,21 @@ func (a *Allocator) initInputs(tokens []int64) error {
 func (a *Allocator) initOutputs(tokens []int64) error {
 	capacity := 0
 
-	if a.withLogits {
+	if a.options.WithLogits {
 		capacity++
 	}
 
-	if a.withLogProbs {
+	if a.options.WithLogProbs {
 		capacity++
 	}
 
-	if a.withCache {
+	if a.options.WithCache {
 		capacity += 2 * a.config.NumLayers
 	}
 
 	names := make([]string, 0, capacity)
 
-	if a.withLogits {
+	if a.options.WithLogits {
 		if err := a.logits(false); err != nil {
 			return err
 		}
@@ -193,7 +189,7 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 		names = append(names, "logits")
 	}
 
-	if a.withLogProbs {
+	if a.options.WithLogProbs {
 		if err := a.logProbs(false); err != nil {
 			return err
 		}
@@ -201,7 +197,7 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 		names = append(names, "token_logprobs")
 	}
 
-	if !a.withCache {
+	if !a.options.WithCache {
 		a.outputNames = names
 
 		return nil
@@ -247,13 +243,13 @@ func (a *Allocator) Step(token int64) error {
 		return err
 	}
 
-	if a.withLogits {
+	if a.options.WithLogits {
 		if err := a.logits(true); err != nil {
 			return err
 		}
 	}
 
-	if a.withLogProbs {
+	if a.options.WithLogProbs {
 		if err := a.logProbs(true); err != nil {
 			return err
 		}

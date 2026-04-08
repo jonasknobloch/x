@@ -31,7 +31,13 @@ func generate(prompt []int64) {
 
 	cfg.VocabSize = 8193
 
-	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_cache.onnx", "0", cfg, true, true, false)
+	opts := gpt2.Options{
+		WithCache:    true,
+		WithLogits:   true,
+		WithLogProbs: false,
+	}
+
+	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_cache.onnx", "0", cfg, opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
@@ -55,7 +61,13 @@ func score(prompt []int64) {
 
 	cfg.VocabSize = 8193
 
-	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_eval.onnx", "0", cfg, false, false, true)
+	opts := gpt2.Options{
+		WithCache:    false,
+		WithLogits:   false,
+		WithLogProbs: true,
+	}
+
+	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_eval.onnx", "0", cfg, opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)

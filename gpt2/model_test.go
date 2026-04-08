@@ -40,7 +40,13 @@ func fromModel() []float32 {
 }
 
 func model() *Model {
-	m := NewModel("models/base/model.onnx", "0", DefaultConfig(), true, true, false) // TODO check if CUDA is available
+	opts := Options{
+		WithCache:    true,
+		WithLogits:   true,
+		WithLogProbs: false,
+	}
+
+	m := NewModel("models/base/model.onnx", "0", DefaultConfig(), opts) // TODO check if CUDA is available
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
