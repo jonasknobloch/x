@@ -19,9 +19,9 @@ type Allocator struct {
 	withLogProbs   bool
 }
 
-func NewAllocator(config Config, batchSize int, withCache bool, withLogits bool, withLogProbs bool) *Allocator {
+func NewAllocator(cfg Config, batchSize int, withCache bool, withLogits bool, withLogProbs bool) *Allocator {
 	return &Allocator{
-		config:       config,
+		config:       cfg,
 		batchSize:    batchSize,
 		values:       make(map[string]ort.Value),
 		withCache:    withCache,
@@ -34,7 +34,7 @@ func (a *Allocator) InputNames() []string {
 	capacity := 3
 
 	if a.withCache {
-		capacity += 2 * a.config.nLayers
+		capacity += 2 * a.config.NumLayers
 	}
 
 	names := make([]string, 0, capacity)
@@ -42,7 +42,7 @@ func (a *Allocator) InputNames() []string {
 	names = append(names, "input_ids", "position_ids", "attention_mask")
 
 	if a.withCache {
-		for i := range a.config.nLayers {
+		for i := range a.config.NumLayers {
 			names = append(names, fmt.Sprintf("past_key_values.%d.key", i), fmt.Sprintf("past_key_values.%d.value", i))
 		}
 	}
@@ -62,7 +62,7 @@ func (a *Allocator) OutputNames() []string {
 	}
 
 	if a.withCache {
-		capacity += 2 * a.config.nLayers
+		capacity += 2 * a.config.NumLayers
 	}
 
 	names := make([]string, 0, capacity)
@@ -76,7 +76,7 @@ func (a *Allocator) OutputNames() []string {
 	}
 
 	if a.withCache {
-		for i := range a.config.nLayers {
+		for i := range a.config.NumLayers {
 			names = append(names, fmt.Sprintf("present.%d.key", i), fmt.Sprintf("present.%d.value", i))
 		}
 	}
@@ -120,7 +120,7 @@ func (a *Allocator) initInputs(tokens []int64) error {
 	capacity := 3
 
 	if a.withCache {
-		capacity += 2 * a.config.nLayers
+		capacity += 2 * a.config.NumLayers
 	}
 
 	names := make([]string, 0, capacity)
@@ -149,7 +149,7 @@ func (a *Allocator) initInputs(tokens []int64) error {
 		return nil
 	}
 
-	for i := range int64(a.config.nLayers) {
+	for i := range int64(a.config.NumLayers) {
 		if err := a.pastKeyValues(i, "key", false); err != nil {
 			return err
 		}
@@ -180,7 +180,7 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 	}
 
 	if a.withCache {
-		capacity += 2 * a.config.nLayers
+		capacity += 2 * a.config.NumLayers
 	}
 
 	names := make([]string, 0, capacity)
@@ -207,7 +207,7 @@ func (a *Allocator) initOutputs(tokens []int64) error {
 		return nil
 	}
 
-	for i := range int64(a.config.nLayers) {
+	for i := range int64(a.config.NumLayers) {
 		if err := a.presentKeyValues(0, i, "key", false); err != nil {
 			return err
 		}
@@ -259,7 +259,7 @@ func (a *Allocator) Step(token int64) error {
 		}
 	}
 
-	for i := range int64(a.config.nLayers) {
+	for i := range int64(a.config.NumLayers) {
 		for _, suffix := range []string{"key", "value"} {
 			if err := a.rotateCache(i, suffix); err != nil {
 				return err
@@ -387,7 +387,7 @@ func (a *Allocator) attentionMask(start int64, force bool) error {
 }
 
 func (a *Allocator) pastKeyValues(i int64, suffix string, force bool) error {
-	if int(i) > a.config.nLayers {
+	if int(i) > a.config.NumLayers {
 		panic("invalid layer index")
 	}
 
@@ -405,7 +405,7 @@ func (a *Allocator) pastKeyValues(i int64, suffix string, force bool) error {
 		_ = a.values[name].Destroy()
 	}
 
-	shape := []int64{int64(a.batchSize), int64(a.config.nHeads), 0, int64(a.config.headDim)}
+	shape := []int64{int64(a.batchSize), int64(a.config.NumHeads), 0, int64(a.config.HeadDim)}
 
 	if t, err := ort.NewEmptyTensor[float32](shape); err != nil {
 		return err
@@ -427,7 +427,7 @@ func (a *Allocator) logits(force bool) error {
 		_ = a.values[name].Destroy()
 	}
 
-	shape := []int64{int64(a.batchSize), a.sequenceLength, int64(a.config.vocabSize)}
+	shape := []int64{int64(a.batchSize), a.sequenceLength, int64(a.config.VocabSize)}
 
 	if t, err := ort.NewEmptyTensor[float32](shape); err != nil {
 		return err
@@ -461,7 +461,7 @@ func (a *Allocator) logProbs(force bool) error {
 }
 
 func (a *Allocator) presentKeyValues(start, i int64, suffix string, force bool) error {
-	if int(i) > a.config.nLayers {
+	if int(i) > a.config.NumLayers {
 		panic("invalid layer index")
 	}
 
@@ -479,7 +479,7 @@ func (a *Allocator) presentKeyValues(start, i int64, suffix string, force bool) 
 		_ = a.values[name].Destroy()
 	}
 
-	shape := []int64{int64(a.batchSize), int64(a.config.nHeads), start + a.sequenceLength, int64(a.config.headDim)}
+	shape := []int64{int64(a.batchSize), int64(a.config.NumHeads), start + a.sequenceLength, int64(a.config.HeadDim)}
 
 	if t, err := ort.NewEmptyTensor[float32](shape); err != nil {
 		return err

@@ -1,25 +1,19 @@
 package gpt2
 
 type Config struct {
-	vocabSize  int
-	nLayers    int
-	nHeads     int
-	headDim    int
-	nPositions int
+	VocabSize    int
+	NumLayers    int
+	NumHeads     int
+	HeadDim      int
+	NumPositions int
 }
 
 func DefaultConfig() Config {
 	return Config{
-		vocabSize:  50257,
-		nLayers:    12,
-		nHeads:     12,
-		headDim:    64,
-		nPositions: 1024,
+		VocabSize:    50257,
+		NumLayers:    12,
+		NumHeads:     12,
+		HeadDim:      64,
+		NumPositions: 1024,
 	}
-}
-
-func (c Config) WithVocabSize(vocabSize int) Config {
-	c.vocabSize = vocabSize
-
-	return c
 }
