@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewDense_Strides(t *testing.T) {
-	d := NewDense[float32]([]int{2, 3, 4})
+	d := NewDense[float32]([]int{2, 3, 4}, nil)
 
 	expected := []int{12, 4, 1}
 
@@ -16,7 +16,7 @@ func TestNewDense_Strides(t *testing.T) {
 }
 
 func TestDense_IsContiguous(t *testing.T) {
-	d := NewDense[float32]([]int{2, 3})
+	d := NewDense[float32]([]int{2, 3}, nil)
 
 	if !d.IsContiguous() {
 		t.Fatalf("expected contiguous true")
@@ -30,7 +30,7 @@ func TestDense_IsContiguous(t *testing.T) {
 }
 
 func TestDense_IsContiguousStrict(t *testing.T) {
-	d := NewDense[int]([]int{1, 3})
+	d := NewDense[int]([]int{1, 3}, nil)
 
 	v := Dense[int]{
 		base:    d.base,
@@ -45,7 +45,7 @@ func TestDense_IsContiguousStrict(t *testing.T) {
 }
 
 func TestDense_Contiguous(t *testing.T) {
-	d := NewDense[float32]([]int{2, 3})
+	d := NewDense[float32]([]int{2, 3}, nil)
 
 	permuted := d.Permute([]int{1, 0})
 
@@ -57,7 +57,7 @@ func TestDense_Contiguous(t *testing.T) {
 }
 
 func TestDense_Permute(t *testing.T) {
-	d := NewDense[float32]([]int{2, 3})
+	d := NewDense[float32]([]int{2, 3}, nil)
 
 	for i := range d.Size() {
 		d.base[i] = float32(i)
@@ -88,7 +88,7 @@ func TestDense_Permute(t *testing.T) {
 }
 
 func TestDense_All(t *testing.T) {
-	d := NewDense[float32]([]int{2, 3})
+	d := NewDense[float32]([]int{2, 3}, nil)
 
 	for i := range d.Size() {
 		d.base[i] = float32(i)

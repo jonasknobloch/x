@@ -11,7 +11,7 @@ type Dense[T any] struct {
 	strides []int
 }
 
-func NewDense[T any](shape []int) Dense[T] {
+func NewDense[T any](shape []int, base []T) Dense[T] {
 	r := len(shape)
 
 	if r == 0 {
@@ -33,6 +33,14 @@ func NewDense[T any](shape []int) Dense[T] {
 		n *= shape[dim]
 	}
 
+	if base == nil {
+		base = make([]T, n)
+	}
+
+	if len(base) != n {
+		panic("unexpected base length")
+	}
+
 	strides := make([]int, len(shape))
 
 	for dim := range slices.Backward(strides) {
@@ -46,7 +54,7 @@ func NewDense[T any](shape []int) Dense[T] {
 	}
 
 	out := Dense[T]{
-		base:    make([]T, n),
+		base:    base,
 		offset:  0,
 		shape:   make([]int, len(shape)),
 		strides: strides,
@@ -107,14 +115,14 @@ func (d Dense[T]) IsContiguous() bool {
 
 func (d Dense[T]) Contiguous() Dense[T] {
 	if d.IsContiguous() {
-		out := NewDense[T](d.shape)
+		out := NewDense[T](d.shape, nil)
 
 		copy(out.base, d.base[d.offset:d.offset+d.Size()])
 
 		return out
 	}
 
-	out := NewDense[T](d.shape)
+	out := NewDense[T](d.shape, nil)
 
 	idxs := make([]int, d.Rank())
 
