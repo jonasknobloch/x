@@ -18,3 +18,23 @@ func NewTokenizerFromFiles(vocab, merges string) (*Tokenizer, error) {
 
 	return NewTokenizer(tokenizer), nil
 }
+
+func Vocab(t *Tokenizer) []string {
+	m, ok := t.mbpe.Model().(*mbpe.MBPE)
+
+	if !ok {
+		panic("unimplemented")
+	}
+
+	return m.Vocab()
+}
+
+func Merges(t *Tokenizer) [][2]string {
+	m, ok := t.mbpe.Model().(*mbpe.MBPE)
+
+	if !ok {
+		panic("unimplemented")
+	}
+
+	return m.Merges()
+}

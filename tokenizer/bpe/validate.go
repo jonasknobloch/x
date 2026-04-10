@@ -106,3 +106,17 @@ func ByteCoverage(t *Tokenizer) bool {
 
 	return covered
 }
+
+func ReachableMerges(t *Tokenizer, merges [][2]string) []bool {
+	mask := make([]bool, len(merges))
+
+	for i, merge := range merges {
+		a := t.Tokenize(merge[0])
+		b := t.Tokenize(merge[1])
+		c := t.Tokenize(merge[0] + merge[1])
+
+		mask[i] = len(a) == 1 && len(b) == 1 && len(c) == 1
+	}
+
+	return mask
+}

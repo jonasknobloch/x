@@ -5,6 +5,7 @@ use (
 	./gpt2
 	./llm
 	./mbpe
+	./research/lesci
 	./tensor
 	./tokenizer
 	./tui
