@@ -1,7 +1,6 @@
 package llm
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -31,12 +30,6 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 
 				func() {
 					defer devicePool.Release(device)
-
-					defer func() {
-						if r := recover(); r != nil {
-							fmt.Println("HOUSTON") // TODO handle
-						}
-					}()
 
 					e.execute(&b, device)
 				}()
