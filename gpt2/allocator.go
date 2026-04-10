@@ -19,10 +19,10 @@ type Allocator struct {
 
 func NewAllocator(cfg Config, opts Options, batchSize int) *Allocator {
 	return &Allocator{
-		config:       cfg,
-		options:      opts,
-		batchSize:    batchSize,
-		values:       make(map[string]ort.Value),
+		config:    cfg,
+		options:   opts,
+		batchSize: batchSize,
+		values:    make(map[string]ort.Value),
 	}
 }
 
@@ -98,11 +98,15 @@ func (a *Allocator) Init(tokens []int64) error {
 	if err := a.initInputs(tokens); err != nil {
 		a.Destroy()
 
+		a.values = make(map[string]ort.Value)
+
 		return err
 	}
 
 	if err := a.initOutputs(tokens); err != nil {
 		a.Destroy()
+
+		a.values = make(map[string]ort.Value)
 
 		return err
 	}
