@@ -57,6 +57,10 @@ func perplexity() {
 	ppl := math.Exp(avg)
 
 	fmt.Println(ppl)
+
+	if err := m.Destroy(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func joined() dataset.Reader {

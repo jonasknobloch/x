@@ -65,6 +65,10 @@ func logprobs() {
 	}); err != nil {
 		log.Fatal(err)
 	}
+
+	if err := m.Destroy(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func prepare(name string) (*sql.Stmt, *sql.DB, error) {

@@ -53,7 +53,9 @@ func generate(prompt []int64) {
 
 	fmt.Println(selectLogProbs(logits[:len(logits)-1], prompt[1:]))
 
-	m.Destroy()
+	if err := m.Destroy(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func score(prompt []int64) {
@@ -81,7 +83,9 @@ func score(prompt []int64) {
 
 	fmt.Println(logProbs)
 
-	m.Destroy()
+	if err := m.Destroy(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func selectLogProbs(logits [][]float32, tokens []int64) []float32 {

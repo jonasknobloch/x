@@ -12,20 +12,20 @@ import (
 )
 
 type Model struct {
-	name         string
-	deviceID     string
-	config       Config
-	options      Options
-	session      *ort.DynamicAdvancedSession
-	allocator    *Allocator
+	name      string
+	deviceID  string
+	config    Config
+	options   Options
+	session   *ort.DynamicAdvancedSession
+	allocator *Allocator
 }
 
 func NewModel(name string, deviceID string, cfg Config, opts Options) *Model {
 	return &Model{
-		name:         name,
-		deviceID:     deviceID,
-		config:       cfg,
-		options:      opts,
+		name:     name,
+		deviceID: deviceID,
+		config:   cfg,
+		options:  opts,
 	}
 }
 
@@ -89,8 +89,10 @@ func (m *Model) Init() error {
 	return nil
 }
 
-func (m *Model) Destroy() {
+func (m *Model) Destroy() error {
 	m.allocator.Destroy()
+
+	return m.session.Destroy()
 }
 
 func (m *Model) Generate(prompt []int64, steps int64, logits *[][]float32) ([]int64, error) {
