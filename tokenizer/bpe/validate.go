@@ -108,14 +108,39 @@ func ByteCoverage(t *Tokenizer) bool {
 }
 
 func ReachableMerges(t *Tokenizer, merges [][2]string) []bool {
+	atoi := make(map[string]int)
+
+	vocab := Vocab(t)
+
+	for i, token := range vocab {
+		if _, ok := atoi[token]; ok {
+			continue
+		}
+
+		atoi[token] = i
+	}
+
+	reachable := make(map[string]struct{})
+
+	for _, a := range InitialAlphabet() {
+		if _, ok := atoi[string(a)]; ok {
+			reachable[string(a)] = struct{}{}
+		}
+	}
+
 	mask := make([]bool, len(merges))
 
 	for i, merge := range merges {
-		a := t.Tokenize(merge[0])
-		b := t.Tokenize(merge[1])
-		c := t.Tokenize(merge[0] + merge[1])
+		_, a := reachable[merge[0]]
+		_, b := reachable[merge[1]]
 
-		mask[i] = len(a) == 1 && len(b) == 1 && len(c) == 1
+		if !a || !b {
+			continue
+		}
+
+		reachable[merge[0]+merge[1]] = struct{}{}
+
+		mask[i] = true
 	}
 
 	return mask

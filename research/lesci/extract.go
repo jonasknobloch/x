@@ -52,22 +52,34 @@ func Rules(tokenizer llm.Tokenizer, merges [][2]string) (tensor.Dense[int64], []
 
 	rules := tensor.NewDense[int64]([]int{len(merges), 3}, nil)
 
+	atoi := make(map[string]int)
+
+	vocab := bpe.Vocab(tokenizer.(*bpe.Tokenizer))
+
+	for i, token := range vocab {
+		if _, ok := atoi[token]; ok {
+			continue
+		}
+
+		atoi[token] = i
+	}
+
 	for i, merge := range merges {
 		if !valid[i] {
 			continue
 		}
 
-		a := tokenizer.Tokenize(merge[0])
-		b := tokenizer.Tokenize(merge[1])
-		c := tokenizer.Tokenize(merge[0] + merge[1])
+		a, x := atoi[merge[0]]
+		b, y := atoi[merge[1]]
+		c, z := atoi[merge[0]+merge[1]]
 
-		if len(a) != 1 || len(b) != 1 || len(c) != 1 {
-			panic("unexpected token IDs")
+		if !x || !y || !z {
+			panic("unknown token")
 		}
 
-		rules.Set([]int{i, 0}, int64(a[0]))
-		rules.Set([]int{i, 1}, int64(b[0]))
-		rules.Set([]int{i, 2}, int64(c[0]))
+		rules.Set([]int{i, 0}, int64(a))
+		rules.Set([]int{i, 1}, int64(b))
+		rules.Set([]int{i, 2}, int64(c))
 	}
 
 	return rules, valid
