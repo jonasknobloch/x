@@ -52,17 +52,7 @@ func Rules(tokenizer llm.Tokenizer, merges [][2]string) (tensor.Dense[int64], []
 
 	rules := tensor.NewDense[int64]([]int{len(merges), 3}, nil)
 
-	atoi := make(map[string]int)
-
-	vocab := bpe.Vocab(tokenizer.(*bpe.Tokenizer))
-
-	for i, token := range vocab {
-		if _, ok := atoi[token]; ok {
-			continue
-		}
-
-		atoi[token] = i
-	}
+	atoi := bpe.Atoi(tokenizer.(*bpe.Tokenizer))
 
 	for i, merge := range merges {
 		if !valid[i] {

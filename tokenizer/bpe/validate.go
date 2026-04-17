@@ -30,17 +30,7 @@ func InitialAlphabet() []rune {
 }
 
 func UnknownRunes(t *Tokenizer, s string) []rune {
-	atoi := make(map[string]int)
-
-	vocab := t.mbpe.Model().(*mbpe.MBPE).Vocab()
-
-	for i, token := range vocab {
-		if _, ok := atoi[token]; ok {
-			continue
-		}
-
-		atoi[token] = i
-	}
+	atoi := Atoi(t)
 
 	unknown := make(map[rune]struct{})
 
@@ -74,17 +64,7 @@ func UnknownRunes(t *Tokenizer, s string) []rune {
 }
 
 func ByteCoverage(t *Tokenizer) bool {
-	atoi := make(map[string]int)
-
-	vocab := t.mbpe.Model().(*mbpe.MBPE).Vocab()
-
-	for i, token := range vocab {
-		if _, ok := atoi[token]; ok {
-			continue
-		}
-
-		atoi[token] = i
-	}
+	atoi := Atoi(t)
 
 	bc := mbpe.BytesChar
 
@@ -108,17 +88,7 @@ func ByteCoverage(t *Tokenizer) bool {
 }
 
 func ReachableMerges(t *Tokenizer, merges [][2]string) []bool {
-	atoi := make(map[string]int)
-
-	vocab := Vocab(t)
-
-	for i, token := range vocab {
-		if _, ok := atoi[token]; ok {
-			continue
-		}
-
-		atoi[token] = i
-	}
+	atoi := Atoi(t)
 
 	reachable := make(map[string]struct{})
 
@@ -144,4 +114,28 @@ func ReachableMerges(t *Tokenizer, merges [][2]string) []bool {
 	}
 
 	return mask
+}
+
+func Atoi(t *Tokenizer) map[string]int64 {
+	atoi := make(map[string]int64)
+
+	for i, token := range Vocab(t) {
+		if _, ok := atoi[token]; ok {
+			panic("duplicate token")
+		}
+
+		atoi[token] = int64(i)
+	}
+
+	return atoi
+}
+
+func Itoa(t *Tokenizer) map[int64]string {
+	itoa := make(map[int64]string)
+
+	for i, token := range Vocab(t) {
+		itoa[int64(i)] = token
+	}
+
+	return itoa
 }
