@@ -1,15 +1,13 @@
-module go.jknobloc.com/x/research/lesci
+module go.jknobloc.com/x/research/sander
 
 go 1.25.0
 
 require (
 	github.com/duckdb/duckdb-go/v2 v2.10501.0
-	go.jknobloc.com/x/dataset v0.0.0-20260410210408-456f8218a2d1
-	go.jknobloc.com/x/gpt2 v0.0.0-20260410210408-456f8218a2d1
-	go.jknobloc.com/x/llm v0.0.0-20260410210408-456f8218a2d1
-	go.jknobloc.com/x/tensor v0.0.0-20260317200409-2284e401d29f
+	go.jknobloc.com/x/onnx v0.0.0-20260417134810-4d8f647bfb54
+	go.jknobloc.com/x/research/lesci v0.0.0-20260414175339-402477b200d1
+	go.jknobloc.com/x/tensor v0.0.0-20260414175339-402477b200d1
 	go.jknobloc.com/x/tokenizer v0.0.0-20260410210408-456f8218a2d1
-	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.16.0
 )
 
@@ -42,8 +40,9 @@ require (
 	github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8 // indirect
 	github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
-	github.com/yalue/onnxruntime_go v1.25.0 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
+	go.jknobloc.com/x/dataset v0.0.0-20260410210408-456f8218a2d1 // indirect
+	go.jknobloc.com/x/llm v0.0.0-20260410210408-456f8218a2d1 // indirect
 	go.jknobloc.com/x/tui v0.0.0-20260324194423-87bbece7e040 // indirect
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
 	golang.org/x/image v0.37.0 // indirect
@@ -55,6 +54,7 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/tools v0.42.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
+	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
