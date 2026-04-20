@@ -29,7 +29,7 @@ type FSA struct {
 func NewFSA() *FSA {
 	return &FSA{
 		state:  StateInitial,
-		static: []string{"'s", "'t", "'re", "'m", "'ll", "'d"},
+		static: []string{"'s", "'t", "'re", "'ve", "'m", "'ll", "'d"},
 	}
 }
 
