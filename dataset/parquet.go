@@ -161,6 +161,12 @@ func (p *ParquetReader) read(name string) iter.Seq[string] {
 				}
 			}
 		}
+
+		if err := recordReader.Err(); err != nil {
+			p.err = err
+
+			return
+		}
 	}
 }
 
