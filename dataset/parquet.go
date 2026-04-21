@@ -72,15 +72,15 @@ func (p *ParquetReader) Texts() iter.Seq2[int, string] {
 
 		for _, name := range p.shards {
 			for text := range p.read(name) {
-				if p.err != nil {
-					return
-				}
-
 				if !yield(n, text) {
 					return
 				}
 
 				n++
+			}
+
+			if p.err != nil {
+				return
 			}
 		}
 	}
