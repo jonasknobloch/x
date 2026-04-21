@@ -17,7 +17,15 @@ func (t *Tokenizer) Encode(s string) []int {
 }
 
 func (t *Tokenizer) Decode(ids []int) string {
-	panic("unimplemented") // TODO implement
+	d := t.mbpe.Decoder()
+
+	m, ok := t.mbpe.Model().(*mbpe.MBPE)
+
+	if !ok {
+		panic("unsupported model")
+	}
+
+	return d.Decode(m.ToString(ids))
 }
 
 func (t *Tokenizer) Tokenize(s string) (ids []int) {
