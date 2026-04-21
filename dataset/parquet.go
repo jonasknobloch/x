@@ -7,6 +7,7 @@ import (
 	"iter"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
@@ -23,12 +24,17 @@ type ParquetReader struct {
 }
 
 func NewParquetReader(name string) (*ParquetReader, error) {
-	var shards []string
+	shards := make([]string, 0)
 
 	if matches, err := filepath.Glob(filepath.Join(name, "*.parquet")); err != nil {
 		return nil, err
 	} else {
-		shards = matches
+		// skip AppleDouble metadata files
+		for _, m := range matches {
+			if !strings.HasPrefix(filepath.Base(m), "._") {
+				shards = append(shards, m)
+			}
+		}
 	}
 
 	if len(shards) == 0 {
