@@ -22,22 +22,16 @@ const (
 )
 
 type FSA struct {
-	state  int
 	static []string
 }
 
 func NewFSA() *FSA {
 	return &FSA{
-		state:  StateInitial,
 		static: []string{"'s", "'t", "'re", "'ve", "'m", "'ll", "'d"},
 	}
 }
 
-func (f *FSA) Reset() {
-	f.state = StateInitial
-}
-
-func (f *FSA) Read(next rune) bool {
+func (f *FSA) Read(state int, next rune) (int, bool) {
 	var r int
 
 	if next == 32 {
@@ -52,106 +46,74 @@ func (f *FSA) Read(next rune) bool {
 		r = RuneOther
 	}
 
-	if f.state == StateInitial {
+	if state == StateInitial {
 		switch r {
 		case RuneUnicode32:
-			f.state = StateU32
-
-			break
+			return StateU32, true
 		case RuneWhitespaceNotUnicode32:
-			f.state = StateWhitespaceNotUnicode32
-
-			break
+			return StateWhitespaceNotUnicode32, true
 		case RuneLetter:
-			f.state = StateLetter
-
-			break
+			return StateLetter, true
 		case RuneNumber:
-			f.state = StateNumber
-
-			break
+			return StateNumber, true
 		default:
-			f.state = StateOther
+			return StateOther, true
 		}
-	} else if f.state == StateU32 {
+	} else if state == StateU32 {
 		switch r {
 		case RuneUnicode32:
-			f.state = StateWhitespaceLookAhead
-
-			break
+			return StateWhitespaceLookAhead, true
 		case RuneWhitespaceNotUnicode32:
-			f.state = StateWhitespaceLookAhead
-
-			break
+			return StateWhitespaceLookAhead, true
 		case RuneLetter:
-			f.state = StateLetter
-
-			break
+			return StateLetter, true
 		case RuneNumber:
-			f.state = StateNumber
-
-			break
+			return StateNumber, true
 		default:
-			f.state = StateOther
+			return StateOther, true
 		}
-	} else if f.state == StateWhitespaceNotUnicode32 {
+	} else if state == StateWhitespaceNotUnicode32 {
 		switch r {
 		case RuneUnicode32:
-			f.state = StateWhitespaceLookAhead
-
-			break
+			return StateWhitespaceLookAhead, true
 		case RuneWhitespaceNotUnicode32:
-			f.state = StateWhitespaceLookAhead
-
-			break
+			return StateWhitespaceLookAhead, true
 		default:
-			return false
+			return state, false
 		}
-	} else if f.state == StateNumber {
+	} else if state == StateNumber {
 		switch r {
 		case RuneNumber:
-			f.state = StateNumber
-
-			break
+			return StateNumber, true
 		default:
-			return false
+			return state, false
 		}
-	} else if f.state == StateLetter {
+	} else if state == StateLetter {
 		switch r {
 		case RuneLetter:
-			f.state = StateLetter
-
-			break
+			return StateLetter, true
 		default:
-			return false
+			return state, false
 		}
-	} else if f.state == StateOther {
+	} else if state == StateOther {
 		switch r {
 		case RuneOther:
-			f.state = StateOther
-
-			break
+			return StateOther, true
 		default:
-			return false
+			return state, false
 		}
-	} else if f.state == StateWhitespaceLookAhead {
+	} else if state == StateWhitespaceLookAhead {
 		switch r {
 		case RuneUnicode32:
-			f.state = StateWhitespaceLookAhead
-
-			break
+			return StateWhitespaceLookAhead, true
 		case RuneWhitespaceNotUnicode32:
-			f.state = StateWhitespaceLookAhead
-
-			break
+			return StateWhitespaceLookAhead, true
 		default:
-			return false
+			return state, false
 		}
 	} else {
 		panic("invalid state")
 	}
-
-	return true
 }
 
 func (f *FSA) FindAll(s string) []string {
@@ -185,30 +147,30 @@ func (f *FSA) FindAll(s string) []string {
 
 		prev, stop := start, start
 
+		state := StateInitial
+
 		for stop < len(s) {
 			r, size := utf8.DecodeRuneInString(s[stop:])
 
-			ok := f.Read(r)
+			next, ok := f.Read(state, r)
 
 			if ok {
 				prev = stop
 				stop += size
+
+				state = next
 			} else {
-				if f.state == StateInitial {
+				if state == StateInitial {
 					return matches
 				}
 
-				if f.state == StateWhitespaceLookAhead {
+				if state == StateWhitespaceLookAhead {
 					matches = append(matches, s[start:prev])
-
-					f.Reset()
 
 					return findAll(prev, matches)
 				}
 
 				matches = append(matches, s[start:stop])
-
-				f.Reset()
 
 				return findAll(stop, matches)
 			}
@@ -220,8 +182,6 @@ func (f *FSA) FindAll(s string) []string {
 
 		return matches
 	}
-
-	defer f.Reset()
 
 	return findAll(0, make([]string, 0))
 }
