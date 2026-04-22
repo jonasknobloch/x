@@ -4,6 +4,7 @@ use (
 	./dataset
 	./gpt2
 	./llm
+	./llmc
 	./mbpe
 	./onnx
 	./research/lesci
