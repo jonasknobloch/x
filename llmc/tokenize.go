@@ -5,48 +5,33 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sync"
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/llm"
 )
 
 func TokenizeAll(reader dataset.Reader, tok llm.Tokenizer, eot int) <-chan []uint32 {
-	out := make(chan []uint32, 256)
-
-	go func() {
-		defer close(out)
-
-		sem := make(chan struct{}, max(1, runtime.NumCPU()-1))
-
-		var wg sync.WaitGroup
-
+	texts := func(yield func(string) bool) {
 		for _, text := range reader.Texts() {
-			sem <- struct{}{}
+			if !yield(text) {
+				return
+			}
+		}
+	}
 
-			wg.Add(1)
+	return Pool(texts, max(1, runtime.NumCPU()-1), func(text string) []uint32 {
+		ids := tok.Tokenize(text)
 
-			go func(t string) {
-				defer func() { <-sem; wg.Done() }()
+		tokens := make([]uint32, 0, len(ids)+1)
 
-				tokens := tok.Tokenize(t)
+		tokens = append(tokens, uint32(eot))
 
-				tokensU32 := make([]uint32, len(tokens)+1)
-
-				tokensU32[0] = uint32(eot)
-
-				for i, id := range tokens {
-					tokensU32[i+1] = uint32(id)
-				}
-
-				out <- tokensU32
-			}(text)
+		for _, id := range ids {
+			tokens = append(tokens, uint32(id))
 		}
 
-		wg.Wait()
-	}()
-
-	return out
+		return tokens
+	})
 }
 
 func WriteShards(name, data string, shardSize int, docs <-chan []uint32) error {
