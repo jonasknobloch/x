@@ -2,17 +2,18 @@ package dataset
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"iter"
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 )
 
 type FileReader struct {
-	shards []string
-	err    error
+	shards     []string
+	delimiters []string // TODO single delimiter
+	err        error
 }
 
 func NewFileReader(name, pattern string) (*FileReader, error) {
@@ -30,11 +31,16 @@ func NewFileReader(name, pattern string) (*FileReader, error) {
 
 	slices.Sort(shards)
 
-	f := &FileReader{
-		shards: shards,
-	}
+	return &FileReader{
+		shards:     shards,
+		delimiters: []string{"\r\n", "\r", "\n"},
+	}, nil
+}
 
-	return f, nil
+func (f *FileReader) SetDelimiters(delimiters ...string) *FileReader {
+	f.delimiters = delimiters
+
+	return f
 }
 
 func (f *FileReader) Num() (int, error) {
@@ -75,6 +81,16 @@ func (f *FileReader) read(name string) iter.Seq[string] {
 
 		defer file.Close()
 
+		delimiters := make([][]byte, len(f.delimiters))
+
+		for i, d := range f.delimiters {
+			delimiters[i] = []byte(d)
+		}
+
+		slices.SortFunc(delimiters, func(a, b []byte) int {
+			return len(b) - len(a)
+		})
+
 		scanner := bufio.NewScanner(file)
 
 		buf := make([]byte, 0, 1024*1024)
@@ -86,12 +102,16 @@ func (f *FileReader) read(name string) iter.Seq[string] {
 				return 0, nil, nil
 			}
 
-			if i := strings.IndexAny(string(data), "\r\n"); i >= 0 {
-				if i+1 < len(data) && data[i] == '\r' && data[i+1] == '\n' {
-					return i + 2, data[0 : i+2], nil
-				}
+			i, l := -1, -1
 
-				return i + 1, data[0 : i+1], nil
+			for _, d := range delimiters {
+				if j := bytes.Index(data, d); j >= 0 && (i < 0 || j < i) {
+					i, l = j, len(d)
+				}
+			}
+
+			if i >= 0 {
+				return i + l, data[:i+l], nil // TODO option to consume delimiter
 			}
 
 			if atEOF {
