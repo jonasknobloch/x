@@ -20,13 +20,25 @@ type Model struct {
 	allocator *Allocator
 }
 
-func NewModel(name string, deviceID string, cfg Config, opts Options) *Model {
+func NewModel(name string, cfg Config, opts Options) *Model {
+	deviceID := CUDADeviceID()
+
 	return &Model{
 		name:     name,
 		deviceID: deviceID,
 		config:   cfg,
 		options:  opts,
 	}
+}
+
+func CUDADeviceID() string {
+	id, ok := os.LookupEnv("ONNXRUNTIME_CUDA_DEVICE_ID")
+
+	if !ok {
+		return defaultDeviceID
+	}
+
+	return id
 }
 
 func SharedLibraryPath() string {

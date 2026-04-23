@@ -40,7 +40,7 @@ func model() *gpt2.Model {
 		WithLogProbs: true,
 	}
 
-	m := gpt2.NewModel("gpt2/models/base/model_eval.onnx", "0", gpt2.DefaultConfig(), opts)
+	m := gpt2.NewModel("gpt2/models/base/model_eval.onnx", gpt2.DefaultConfig(), opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)

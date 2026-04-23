@@ -37,7 +37,7 @@ func generate(prompt []int64) {
 		WithLogProbs: false,
 	}
 
-	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_cache.onnx", "0", cfg, opts)
+	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_cache.onnx", cfg, opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
@@ -69,7 +69,7 @@ func score(prompt []int64) {
 		WithLogProbs: true,
 	}
 
-	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_eval.onnx", "0", cfg, opts)
+	m := gpt2.NewModel("gpt2/models/mbpe_conv/gpt2_8192_m000_babylm_v2/model_eval.onnx", cfg, opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)

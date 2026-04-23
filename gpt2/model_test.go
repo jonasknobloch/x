@@ -46,7 +46,7 @@ func model() *Model {
 		WithLogProbs: false,
 	}
 
-	m := NewModel("models/base/model.onnx", "0", DefaultConfig(), opts) // TODO check if CUDA is available
+	m := NewModel("models/base/model.onnx", DefaultConfig(), opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
