@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 
 	"go.jknobloc.com/x/dataset"
+	"go.jknobloc.com/x/shelf"
 )
 
 func main() {
-	root := "./tmp/minipile"
+	root := shelf.Abs("data/minipile")
 
 	if err := dataset.Download("JeanKaddour/minipile", "", root); err != nil {
 		log.Fatal(err)

@@ -5,6 +5,7 @@ import (
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/gpt2"
+	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
 )
 
@@ -24,7 +25,7 @@ func main() {
 func data() *dataset.ParquetReader {
 	var miniPile *dataset.ParquetReader
 
-	if r, err := dataset.NewParquetReader("dataset/cmd/dataset/tmp/minipile/validation"); err != nil {
+	if r, err := dataset.NewParquetReader(shelf.Abs("data/minipile/validation")); err != nil {
 		log.Fatal(err)
 	} else {
 		miniPile = r
@@ -40,7 +41,7 @@ func model() *gpt2.Model {
 		WithLogProbs: true,
 	}
 
-	m := gpt2.NewModel("gpt2/models/base/model_eval.onnx", gpt2.DefaultConfig(), opts)
+	m := gpt2.NewModel(shelf.Abs("models/gpt2/model_eval.onnx"), gpt2.DefaultConfig(), opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
@@ -52,7 +53,7 @@ func model() *gpt2.Model {
 func tokenizer() *bpe.Tokenizer {
 	var tok *bpe.Tokenizer
 
-	if t, err := bpe.NewTokenizerFromFiles("gpt2/models/base/vocab.json", "gpt2/models/base/merges.txt"); err != nil {
+	if t, err := bpe.NewTokenizerFromFiles(shelf.Abs("models/gpt2/vocab.json"), shelf.Abs("models/gpt2/merges.txt")); err != nil {
 		log.Fatal(err)
 	} else {
 		tok = t

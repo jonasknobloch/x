@@ -5,11 +5,12 @@ import (
 	"log"
 
 	"go.jknobloc.com/x/onnx"
+	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tensor"
 )
 
 func main() {
-	data, shape, err := onnx.ExtractInitializer("gpt2/models/base/model.onnx", "transformer.wte.weight")
+	data, shape, err := onnx.ExtractInitializer(shelf.Abs("models/gpt2/model.onnx"), "transformer.wte.weight")
 
 	if err != nil {
 		log.Fatal(err)

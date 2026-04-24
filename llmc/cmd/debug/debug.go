@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"go.jknobloc.com/x/llmc"
+	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
 )
 
@@ -12,10 +13,10 @@ func main() {
 	var data llmc.DataFile[uint16]
 	var gold llmc.DataFile[uint16]
 
-	_ = must(llmc.Deserialize("artifacts/data/llmc/tinyshakespeare/tiny_shakespeare_train.bin", &data))
-	_ = must(llmc.Deserialize("artifacts/test/llmc/tinyshakespeare/tiny_shakespeare_train.bin", &gold))
+	_ = must(llmc.Deserialize(shelf.Abs("llmc/tinyshakespeare/tiny_shakespeare_train.bin"), &data))
+	_ = must(llmc.Deserialize(shelf.Abs("test/llmc/tinyshakespeare/tiny_shakespeare_train.bin"), &gold))
 
-	t := must(bpe.NewTokenizerFromFiles("gpt2/models/base/vocab.json", "gpt2/models/base/merges.txt"))
+	t := must(bpe.NewTokenizerFromFiles(shelf.Abs("models/gpt2/vocab.json"), shelf.Abs("models/gpt2/merges.txt")))
 
 	itoa := bpe.Itoa(t)
 

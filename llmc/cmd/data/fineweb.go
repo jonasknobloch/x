@@ -6,6 +6,7 @@ import (
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/llm"
 	"go.jknobloc.com/x/llmc"
+	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
 )
 
@@ -17,7 +18,7 @@ import (
 func fineWeb() {
 	var reader dataset.Reader
 
-	if r, err := dataset.NewParquetReader("artifacts/data/raw/fineweb-edu/sample-100BT/train"); err != nil {
+	if r, err := dataset.NewParquetReader(shelf.Abs("data/fineweb-edu/sample-100BT/train")); err != nil {
 		log.Fatal(err)
 	} else {
 		reader = r
@@ -25,7 +26,7 @@ func fineWeb() {
 
 	var tokenizer llm.Tokenizer
 
-	if t, err := bpe.NewTokenizerFromFiles("gpt2/models/base/vocab.json", "gpt2/models/base/merges.txt"); err != nil {
+	if t, err := bpe.NewTokenizerFromFiles(shelf.Abs("models/gpt2/vocab.json"), shelf.Abs("models/gpt2/merges.txt")); err != nil {
 		log.Fatal(err)
 	} else {
 		tokenizer = t
@@ -33,7 +34,7 @@ func fineWeb() {
 
 	docs := llmc.TokenizeAll(reader, tokenizer, 50256)
 
-	if err := llmc.WriteShards("artifacts/data/llmc/edu_fineweb100B", "edu_fineweb", 100_000_000, docs); err != nil {
+	if err := llmc.WriteShards(shelf.Abs("llmc/edu_fineweb100B"), "edu_fineweb", 100_000_000, docs); err != nil {
 		log.Fatal(err)
 	}
 

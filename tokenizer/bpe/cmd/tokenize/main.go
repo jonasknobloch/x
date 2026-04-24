@@ -11,6 +11,7 @@ import (
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/llm"
+	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
 	"go.jknobloc.com/x/tui"
 )
@@ -87,7 +88,7 @@ func main() {
 func data() *dataset.ParquetReader {
 	var simple *dataset.ParquetReader
 
-	if r, err := dataset.NewParquetReader("dataset/cmd/dataset/tmp/wikipedia/simple/train"); err != nil {
+	if r, err := dataset.NewParquetReader(shelf.Abs("data/wikipedia/20231101/simple/train")); err != nil {
 		log.Fatal(err)
 	} else {
 		simple = r
@@ -99,7 +100,7 @@ func data() *dataset.ParquetReader {
 func tokenizer() llm.Tokenizer {
 	var tok *bpe.Tokenizer
 
-	if t, err := bpe.NewTokenizerFromFiles("gpt2/models/base/vocab.json", "gpt2/models/base/merges.txt"); err != nil {
+	if t, err := bpe.NewTokenizerFromFiles(shelf.Abs("models/gpt2/vocab.json"), shelf.Abs("models/gpt2/merges.txt")); err != nil {
 		log.Fatal(err)
 	} else {
 		tok = t

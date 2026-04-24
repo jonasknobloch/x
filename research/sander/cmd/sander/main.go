@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"go.jknobloc.com/x/research/sander"
+	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
 )
 
@@ -15,8 +16,8 @@ func main() {
 
 	for _, v := range vocab {
 		for _, a := range alpha {
-			src := fmt.Sprintf("gpt2/models/mbpe/gpt2_%s_%s_babylm_v2", v, a)
-			dst := fmt.Sprintf("out/sander/mbpe/gpt2_%s_%s_babylm_v2", v, a)
+			src := fmt.Sprintf(shelf.Abs("models/mbpe/gpt2_%s_%s_babylm_v2"), v, a)
+			dst := fmt.Sprintf(shelf.Abs("results/sander/mbpe/gpt2_%s_%s_babylm_v2"), v, a)
 
 			if err := run(src, dst); err != nil {
 				log.Fatal(err)

@@ -7,6 +7,8 @@ import (
 	"os"
 	"slices"
 	"testing"
+
+	"go.jknobloc.com/x/shelf"
 )
 
 func TestMain(m *testing.M) {
@@ -46,7 +48,7 @@ func model() *Model {
 		WithLogProbs: false,
 	}
 
-	m := NewModel("models/base/model.onnx", DefaultConfig(), opts)
+	m := NewModel(shelf.Abs("models/gpt2/model_cache.onnx"), DefaultConfig(), opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
@@ -58,7 +60,7 @@ func model() *Model {
 func fromGold() []float32 {
 	shape := []int{1, 9, 50257}
 
-	s, err := f32("test/logits.f32", shape[0]*shape[1]*shape[2])
+	s, err := f32(shelf.Abs("test/gpt2/logits.f32"), shape[0]*shape[1]*shape[2])
 
 	if err != nil {
 		log.Fatal(err)
