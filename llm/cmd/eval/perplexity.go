@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"strings"
 
-	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/llm"
 )
 
@@ -61,18 +59,4 @@ func perplexity() {
 	if err := m.Destroy(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func joined() dataset.Reader {
-	miniPile := data()
-
-	docs := make([]string, 0)
-
-	for _, d := range miniPile.Texts() {
-		docs = append(docs, d)
-	}
-
-	j := dataset.NewStringReader(strings.Join(docs, "\n\n"))
-
-	return j
 }

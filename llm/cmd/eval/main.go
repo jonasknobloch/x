@@ -15,7 +15,6 @@ func main() {
 	}
 
 	perplexity()
-	// logprobs()
 
 	if err := gpt2.DestroyEnvironment(); err != nil {
 		log.Fatal(err)
