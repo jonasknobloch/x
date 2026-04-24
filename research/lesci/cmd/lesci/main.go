@@ -45,8 +45,14 @@ func setup(control, treatment int) (*lesci.Experiment, *gpt2.Model) {
 	b := fmt.Sprintf(shelf.Abs("models/mbpe/gpt2_%d_m000_babylm_v2"), 100512)
 
 	m := must(model(path.Join(a, "model_eval.onnx"), control))
-	t := must(bpe.NewTokenizerFromFiles(path.Join(a, "vocab.json"), path.Join(a, "merges.txt")))
-	c := must(bpe.NewTokenizerFromFiles(path.Join(b, "vocab.json"), path.Join(b, "merges.txt")))
+
+	cfg := bpe.Config{
+		Recover: true,
+	}
+
+	t := must(bpe.NewTokenizerFromFiles(path.Join(a, "vocab.json"), path.Join(a, "merges.txt"), cfg))
+	c := must(bpe.NewTokenizerFromFiles(path.Join(b, "vocab.json"), path.Join(b, "merges.txt"), cfg))
+
 	d := must(dataset.NewFileReader(shelf.Abs("data/babylm/train_100M"), "*.train"))
 
 	o := fmt.Sprintf(shelf.Abs("results/lesci/m000/babylm_%d_%d"), control, treatment)

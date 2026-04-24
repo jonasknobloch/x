@@ -18,7 +18,10 @@ func main() {
 	_ = must(llmc.Deserialize(shelf.Abs("llmc/edu_fineweb100B/edu_fineweb_val_000000.bin"), &a))
 	_ = must(llmc.Deserialize(shelf.Abs("test/llmc/edu_fineweb100B/edu_fineweb_val_000000.bin"), &b))
 
-	t := must(bpe.NewTokenizerFromFiles(shelf.Abs("models/gpt2/vocab.json"), shelf.Abs("models/gpt2/merges.txt")))
+	v := shelf.Abs("models/gpt2/vocab.json")
+	m := shelf.Abs("models/gpt2/merges.txt")
+
+	t := must(bpe.NewTokenizerFromFiles(v, m, bpe.DefaultConfig()))
 
 	s := decode(&a, 1024, t)
 	k := decode(&b, 1024, t)

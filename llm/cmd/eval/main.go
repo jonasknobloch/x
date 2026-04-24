@@ -52,7 +52,10 @@ func model() *gpt2.Model {
 func tokenizer() *bpe.Tokenizer {
 	var tok *bpe.Tokenizer
 
-	if t, err := bpe.NewTokenizerFromFiles(shelf.Abs("models/gpt2/vocab.json"), shelf.Abs("models/gpt2/merges.txt")); err != nil {
+	v := shelf.Abs("models/gpt2/vocab.json")
+	m := shelf.Abs("models/gpt2/merges.txt")
+
+	if t, err := bpe.NewTokenizerFromFiles(v, m, bpe.DefaultConfig()); err != nil {
 		log.Fatal(err)
 	} else {
 		tok = t

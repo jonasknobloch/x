@@ -2,7 +2,7 @@ package bpe
 
 import "github.com/jonasknobloch/mbpe"
 
-func NewTokenizerFromFiles(vocab, merges string) (*Tokenizer, error) {
+func NewTokenizerFromFiles(vocab, merges string, cfg Config) (*Tokenizer, error) {
 	model := mbpe.NewMBPE()
 
 	if err := model.Load(vocab, merges); err != nil {
@@ -16,7 +16,7 @@ func NewTokenizerFromFiles(vocab, merges string) (*Tokenizer, error) {
 	tokenizer.SetPreTokenizer(pre)
 	tokenizer.SetDecoder(pre)
 
-	return NewTokenizer(tokenizer), nil
+	return NewTokenizer(tokenizer, cfg), nil
 }
 
 func Vocab(t *Tokenizer) []string {

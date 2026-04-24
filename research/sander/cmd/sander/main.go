@@ -28,7 +28,11 @@ func main() {
 }
 
 func run(src, dst string) error {
-	t := must(bpe.NewTokenizerFromFiles(path.Join(src, "vocab.json"), path.Join(src, "merges.txt")))
+	cfg := bpe.Config{
+		Recover: true,
+	}
+
+	t := must(bpe.NewTokenizerFromFiles(path.Join(src, "vocab.json"), path.Join(src, "merges.txt"), cfg))
 	e := must(sander.NewExperiment(dst, path.Join(src, "model.onnx"), sander.UnusedTokensMBPE(t)))
 
 	return e.Run()

@@ -16,7 +16,10 @@ func main() {
 	_ = must(llmc.Deserialize(shelf.Abs("llmc/tinyshakespeare/tiny_shakespeare_train.bin"), &data))
 	_ = must(llmc.Deserialize(shelf.Abs("test/llmc/tinyshakespeare/tiny_shakespeare_train.bin"), &gold))
 
-	t := must(bpe.NewTokenizerFromFiles(shelf.Abs("models/gpt2/vocab.json"), shelf.Abs("models/gpt2/merges.txt")))
+	v := shelf.Abs("models/gpt2/vocab.json")
+	m := shelf.Abs("models/gpt2/merges.txt")
+
+	t := must(bpe.NewTokenizerFromFiles(v, m, bpe.DefaultConfig()))
 
 	itoa := bpe.Itoa(t)
 

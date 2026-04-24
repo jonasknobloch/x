@@ -3,12 +3,14 @@ package bpe
 import "github.com/jonasknobloch/mbpe"
 
 type Tokenizer struct {
-	mbpe *mbpe.Tokenizer
+	mbpe   *mbpe.Tokenizer
+	config Config
 }
 
-func NewTokenizer(mbpe *mbpe.Tokenizer) *Tokenizer {
+func NewTokenizer(mbpe *mbpe.Tokenizer, cfg Config) *Tokenizer {
 	return &Tokenizer{
-		mbpe: mbpe,
+		mbpe:   mbpe,
+		config: cfg,
 	}
 }
 
@@ -29,13 +31,15 @@ func (t *Tokenizer) Decode(ids []int) string {
 }
 
 func (t *Tokenizer) Tokenize(s string) (ids []int) {
-	defer func() {
-		if r := recover(); r != nil {
-			// defer UnknownRunes(t, s)
+	if t.config.Recover {
+		defer func() {
+			if r := recover(); r != nil {
+				// defer UnknownRunes(t, s)
 
-			ids = []int{}
-		}
-	}()
+				ids = []int{}
+			}
+		}()
+	}
 
 	return t.Encode(s)
 }
