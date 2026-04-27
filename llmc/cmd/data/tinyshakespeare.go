@@ -19,7 +19,7 @@ func tinyShakespeare() {
 		reader = r
 	}
 
-	reader.SetDelimiters("\n\n")
+	reader.SetDelimiter("\n\n")
 
 	var tokenizer *bpe.Tokenizer
 
