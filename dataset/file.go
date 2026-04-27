@@ -37,8 +37,9 @@ func NewFileReader(name, pattern string) (*FileReader, error) {
 	}, nil
 }
 
-func (f *FileReader) SetDelimiter(delimiter string) *FileReader {
+func (f *FileReader) SetDelimiter(delimiter string) {
 	f.delimiter = delimiter
+}
 
 	return f
 }
