@@ -33,7 +33,7 @@ func NewFileReader(name, pattern string) (*FileReader, error) {
 
 	return &FileReader{
 		shards:     shards,
-		delimiters: []string{"\r\n", "\r", "\n"},
+		delimiters: []string{"\r\n", "\n"},
 	}, nil
 }
 
