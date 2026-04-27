@@ -11,9 +11,10 @@ import (
 )
 
 type FileReader struct {
-	shards    []string
-	delimiter string
-	err       error
+	shards         []string
+	delimiter      string
+	stripDelimiter bool
+	err            error
 }
 
 func NewFileReader(name, pattern string) (*FileReader, error) {
@@ -41,7 +42,8 @@ func (f *FileReader) SetDelimiter(delimiter string) {
 	f.delimiter = delimiter
 }
 
-	return f
+func (f *FileReader) StripDelimiter(stripDelimiter bool) {
+	f.stripDelimiter = stripDelimiter
 }
 
 func (f *FileReader) Num() (int, error) {
@@ -97,7 +99,15 @@ func (f *FileReader) read(name string) iter.Seq[string] {
 			}
 
 			if i := bytes.Index(data, d); i >= 0 {
-				return i + l, data[:i+l], nil // TODO option to consume delimiter
+				if f.stripDelimiter {
+					if f.delimiter == "\n" && i > 0 && data[i-1] == '\r' {
+						return i + l, data[:i-1], nil
+					}
+
+					return i + l, data[:i], nil
+				}
+
+				return i + l, data[:i+l], nil
 			}
 
 			if atEOF {
