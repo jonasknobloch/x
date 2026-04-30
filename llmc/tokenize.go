@@ -34,12 +34,12 @@ func TokenizeAll(reader dataset.Reader, tok llm.Tokenizer, eot int) <-chan []uin
 	})
 }
 
-func WriteShards(name, data string, shardSize int, docs <-chan []uint32) error {
-	if err := os.MkdirAll(name, os.ModePerm); err != nil {
+func WriteShards(path, name string, size int, docs <-chan []uint32) error {
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		return err
 	}
 
-	buffer := make([]uint32, 0, shardSize)
+	buffer := make([]uint32, 0, size)
 
 	shardIdx := 0
 
@@ -50,17 +50,17 @@ func WriteShards(name, data string, shardSize int, docs <-chan []uint32) error {
 			split = "val"
 		}
 
-		path := filepath.Join(name, fmt.Sprintf("%s_%s_%06d.bin", data, split, shardIdx))
+		shardName := filepath.Join(path, fmt.Sprintf("%s_%s_%06d.bin", name, split, shardIdx))
 
 		d := DataFile[uint32]{
 			Model:  GPT2,
 			Tokens: buffer,
 		}
 
-		if n, err := Serialize(&d, path); err != nil {
+		if n, err := Serialize(&d, shardName); err != nil {
 			return err
 		} else {
-			fmt.Printf("wrote %s (%d tokens)\n", filepath.Base(path), n)
+			fmt.Printf("wrote %s (%d tokens)\n", filepath.Base(shardName), n)
 		}
 
 		buffer = buffer[:0]
@@ -72,7 +72,7 @@ func WriteShards(name, data string, shardSize int, docs <-chan []uint32) error {
 
 	for tokens := range docs {
 		for len(tokens) > 0 {
-			space := shardSize - len(buffer)
+			space := size - len(buffer)
 
 			if space >= len(tokens) {
 				buffer = append(buffer, tokens...)
