@@ -47,7 +47,7 @@ func (f *FileReader) StripDelimiter(stripDelimiter bool) {
 }
 
 func (f *FileReader) Num() (int, error) {
-	return len(f.shards), nil
+	return countLinesAll(f.shards, []byte(f.delimiter))
 }
 
 func (f *FileReader) Err() error {
@@ -56,15 +56,19 @@ func (f *FileReader) Err() error {
 
 func (f *FileReader) Texts() iter.Seq2[int, string] {
 	return func(yield func(int, string) bool) {
-		for n, name := range f.shards {
-			for text := range f.read(name) {
-				if f.err != nil {
-					return
-				}
+		n := 0
 
+		for _, name := range f.shards {
+			for text := range f.read(name) {
 				if !yield(n, text) {
 					return
 				}
+
+				n++
+			}
+
+			if f.err != nil {
+				return
 			}
 		}
 	}
