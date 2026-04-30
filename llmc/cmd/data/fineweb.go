@@ -37,7 +37,7 @@ func fineWeb() {
 
 	docs := llmc.TokenizeAll(reader, tokenizer, 50256)
 
-	if err := llmc.WriteShards(shelf.Abs("llmc/edu_fineweb100B"), "edu_fineweb", 100_000_000, docs); err != nil {
+	if _, err := llmc.WriteShards(shelf.Abs("llmc/edu_fineweb100B"), "edu_fineweb", 100_000_000, docs); err != nil {
 		log.Fatal(err)
 	}
 
