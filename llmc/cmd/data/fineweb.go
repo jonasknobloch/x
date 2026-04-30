@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"path"
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/llm"
@@ -37,11 +40,18 @@ func fineWeb() {
 
 	docs := llmc.TokenizeAll(reader, tokenizer, 50256)
 
-	if _, err := llmc.WriteShards(shelf.Abs("llmc/edu_fineweb100B"), "edu_fineweb", 100_000_000, docs); err != nil {
+	if _, err := llmc.WriteShards(shelf.Abs("llmc/edu_fineweb100B"), "edu_fineweb_train", 100_000_000, docs); err != nil {
 		log.Fatal(err)
 	}
 
 	if err := reader.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	oldPath := path.Join(shelf.Abs("llmc/edu_fineweb100B"), fmt.Sprintf("edu_fineweb_train_%06d.bin", 0))
+	newPath := path.Join(shelf.Abs("llmc/edu_fineweb100B"), fmt.Sprintf("edu_fineweb_val_%06d.bin", 0))
+
+	if err := os.Rename(oldPath, newPath); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -44,13 +44,7 @@ func WriteShards(path, name string, size int, docs <-chan []uint32) (int, error)
 	n := 0
 
 	flush := func() error {
-		split := "train"
-
-		if n == 0 {
-			split = "val"
-		}
-
-		shardName := filepath.Join(path, fmt.Sprintf("%s_%s_%06d.bin", name, split, n))
+		shardName := filepath.Join(path, fmt.Sprintf("%s_%06d.bin", name, n))
 
 		d := DataFile[uint32]{
 			Model:  GPT2,
