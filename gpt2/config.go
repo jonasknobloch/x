@@ -14,7 +14,7 @@ type Options struct {
 	WithLogProbs bool
 }
 
-func DefaultConfig() Config {
+func ConfigDefault() Config {
 	return Config{
 		VocabSize:    50257,
 		NumLayers:    12,

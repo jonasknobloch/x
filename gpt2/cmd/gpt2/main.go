@@ -28,7 +28,7 @@ func main() {
 }
 
 func generate(prompt []int64) {
-	cfg := gpt2.DefaultConfig()
+	cfg := gpt2.ConfigDefault()
 
 	cfg.VocabSize = 8193
 
@@ -60,7 +60,7 @@ func generate(prompt []int64) {
 }
 
 func score(prompt []int64) {
-	cfg := gpt2.DefaultConfig()
+	cfg := gpt2.ConfigDefault()
 
 	cfg.VocabSize = 8193
 

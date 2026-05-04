@@ -69,7 +69,7 @@ func must[T any](v T, err error) T {
 }
 
 func model(name string, vocabSize int) (*gpt2.Model, error) {
-	cfg := gpt2.DefaultConfig()
+	cfg := gpt2.ConfigDefault()
 
 	cfg.VocabSize = vocabSize + 1
 

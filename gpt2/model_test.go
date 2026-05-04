@@ -48,7 +48,7 @@ func model() *Model {
 		WithLogProbs: false,
 	}
 
-	m := NewModel(shelf.Abs("models/gpt2/model_cache.onnx"), DefaultConfig(), opts)
+	m := NewModel(shelf.Abs("models/gpt2/model_cache.onnx"), ConfigDefault(), opts)
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
