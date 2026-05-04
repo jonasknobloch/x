@@ -23,3 +23,13 @@ func DefaultConfig() Config {
 		NumPositions: 1024,
 	}
 }
+
+func ConfigLarge() Config {
+	return Config{
+		VocabSize:    50257,
+		NumLayers:    36,
+		NumHeads:     20,
+		HeadDim:      64,
+		NumPositions: 1024,
+	}
+}
