@@ -14,13 +14,15 @@ type Experiment struct {
 	name      string
 	model     string
 	reference map[int64]struct{}
+	hiddenDim int
 }
 
-func NewExperiment(name, model string, reference map[int64]struct{}) (*Experiment, error) {
+func NewExperiment(name, model string, reference map[int64]struct{}, hiddenDim int) (*Experiment, error) {
 	e := &Experiment{
 		name:      name,
 		model:     model,
 		reference: reference,
+		hiddenDim: hiddenDim,
 	}
 
 	return e, nil

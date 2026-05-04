@@ -3,6 +3,7 @@ package sander
 import (
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 
 	"go.jknobloc.com/x/onnx"
 	"go.jknobloc.com/x/research/lesci"
@@ -20,16 +21,16 @@ func (e *Experiment) Extract(db *sql.DB) error {
 		shape = s
 	}
 
-	if shape[1] != 768 {
-		panic("unimplemented")
+	if shape[1] != e.hiddenDim {
+		panic("shape mismatch")
 	}
 
 	t := tensor.NewDense[float32](shape, data)
 
-	if _, err := db.Exec(`
+	if _, err := db.Exec(fmt.Sprintf(`
 	    DROP TABLE IF EXISTS embeddings;
-	    CREATE TABLE embeddings (token_id INTEGER, embedding FLOAT[768], reference BOOLEAN);
-	`); err != nil {
+	    CREATE TABLE embeddings (token_id INTEGER, embedding FLOAT[%d], reference BOOLEAN);
+	`, e.hiddenDim)); err != nil {
 		return err
 	}
 

@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 
+	"go.jknobloc.com/x/gpt2"
 	"go.jknobloc.com/x/research/sander"
 	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
@@ -33,7 +34,7 @@ func run(src, dst string) error {
 	}
 
 	t := must(bpe.NewTokenizerFromFiles(path.Join(src, "vocab.json"), path.Join(src, "merges.txt"), cfg))
-	e := must(sander.NewExperiment(dst, path.Join(src, "model.onnx"), sander.UnusedTokensMBPE(t)))
+	e := must(sander.NewExperiment(dst, path.Join(src, "model.onnx"), sander.UnusedTokensMBPE(t), gpt2.ConfigDefault().HiddenDim))
 
 	return e.Run()
 }
