@@ -5,6 +5,7 @@ type Config struct {
 	NumLayers    int
 	NumHeads     int
 	HeadDim      int
+	HiddenDim    int
 	NumPositions int
 }
 
@@ -20,6 +21,7 @@ func ConfigDefault() Config {
 		NumLayers:    12,
 		NumHeads:     12,
 		HeadDim:      64,
+		HiddenDim:    768,
 		NumPositions: 1024,
 	}
 }
@@ -30,6 +32,7 @@ func ConfigLarge() Config {
 		NumLayers:    36,
 		NumHeads:     20,
 		HeadDim:      64,
+		HiddenDim:    1280,
 		NumPositions: 1024,
 	}
 }
