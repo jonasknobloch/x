@@ -1,44 +1,20 @@
 package main
 
 import (
-	"flag"
 	"log"
-	"os"
-	"runtime"
-	"runtime/pprof"
 	"sync/atomic"
 	"time"
 
 	"go.jknobloc.com/x/dataset"
 	"go.jknobloc.com/x/llm"
+	"go.jknobloc.com/x/profile"
 	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
 	"go.jknobloc.com/x/tui"
 )
 
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
-var memprofile = flag.String("memprofile", "", "write memory profile to `file`")
-
 func main() {
-	flag.Parse()
-
-	if *cpuprofile != "" {
-		var file *os.File
-
-		if f, err := os.Create(*cpuprofile); err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		} else {
-			file = f
-
-			defer file.Close()
-		}
-
-		if err := pprof.StartCPUProfile(file); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-
-		defer pprof.StopCPUProfile()
-	}
+	stop := profile.CPU()
 
 	reader := data()
 
@@ -66,23 +42,9 @@ func main() {
 		processed.Add(1)
 	}
 
-	if *memprofile != "" {
-		var file *os.File
+	profile.Mem()
 
-		if f, err := os.Create(*memprofile); err != nil {
-			log.Fatal("could not create memory profile: ", err)
-		} else {
-			file = f
-
-			defer file.Close()
-		}
-
-		runtime.GC()
-
-		if err := pprof.Lookup("allocs").WriteTo(file, 0); err != nil {
-			log.Fatal("could not write memory profile: ", err)
-		}
-	}
+	stop()
 }
 
 func data() *dataset.ParquetReader {

@@ -10,14 +10,21 @@ import (
 	"github.com/jonasknobloch/mbpe"
 
 	"go.jknobloc.com/x/dataset"
+	"go.jknobloc.com/x/profile"
 	"go.jknobloc.com/x/shelf"
 	"go.jknobloc.com/x/tokenizer/bpe"
 	"go.jknobloc.com/x/tokenizer/bpe/split"
 )
 
 func main() {
+	stop := profile.CPU()
+
 	// train()
 	// serialize()
+
+	profile.Mem()
+
+	stop()
 }
 
 func train() {
