@@ -34,8 +34,8 @@ func train() {
 		log.Fatal(err)
 	}
 
-	morfessor := func(alpha float64) mbpe.Segmenter {
-		m := mbpe.NewMorfessor(alpha)
+	morfessor := func() mbpe.Segmenter {
+		m := mbpe.NewMorfessor()
 
 		if err := m.LoadModel(shelf.Abs("morfessor/semisup_model.proto")); err != nil {
 			log.Fatal(err)
@@ -45,20 +45,21 @@ func train() {
 	}
 
 	// mbpe.InvertWeightFunction = true
+	// mbpe.UseSimpleClashes = true
 
-	m000 := morfessor(0.0)
-	m010 := morfessor(0.1)
-	m020 := morfessor(0.2)
-	m030 := morfessor(0.3)
-	m040 := morfessor(0.4)
-	m050 := morfessor(0.5)
-	m060 := morfessor(0.6)
-	m070 := morfessor(0.7)
-	m080 := morfessor(0.8)
-	m090 := morfessor(0.9)
-	m100 := morfessor(1.0)
+	m000 := morfessor()
+	m010 := morfessor()
+	m020 := morfessor()
+	m030 := morfessor()
+	m040 := morfessor()
+	m050 := morfessor()
+	m060 := morfessor()
+	m070 := morfessor()
+	m080 := morfessor()
+	m090 := morfessor()
+	m100 := morfessor()
 
-	newTrainer := func(segmenter mbpe.Segmenter) *mbpe.MBPETrainer {
+	newTrainer := func(segmenter mbpe.Segmenter, alpha float64) *mbpe.MBPETrainer {
 		alphabet := make(map[string]struct{})
 
 		for _, r := range bpe.InitialAlphabet() {
@@ -69,24 +70,24 @@ func train() {
 
 		b.SetMatcher(split.NewFSA())
 
-		return mbpe.NewMBPETrainer(b, segmenter, mbpe.NewMBPE(), 1<<17, alphabet)
+		return mbpe.NewMBPETrainer(b, segmenter, alpha, mbpe.NewMBPE(), 1<<17, alphabet)
 	}
 
 	trainers := []struct {
 		*mbpe.MBPETrainer
 		string
 	}{
-		{newTrainer(m000), "m000_minipile"},
-		{newTrainer(m010), "m010_minipile"},
-		{newTrainer(m020), "m020_minipile"},
-		{newTrainer(m030), "m030_minipile"},
-		{newTrainer(m040), "m040_minipile"},
-		{newTrainer(m050), "m050_minipile"},
-		{newTrainer(m060), "m060_minipile"},
-		{newTrainer(m070), "m070_minipile"},
-		{newTrainer(m080), "m080_minipile"},
-		{newTrainer(m090), "m090_minipile"},
-		{newTrainer(m100), "m100_minipile"},
+		{newTrainer(m000, 0.0), "m000_minipile_v2"},
+		{newTrainer(m010, 0.1), "m010_minipile_v2"},
+		{newTrainer(m020, 0.2), "m020_minipile_v2"},
+		{newTrainer(m030, 0.3), "m030_minipile_v2"},
+		{newTrainer(m040, 0.4), "m040_minipile_v2"},
+		{newTrainer(m050, 0.5), "m050_minipile_v2"},
+		{newTrainer(m060, 0.6), "m060_minipile_v2"},
+		{newTrainer(m070, 0.7), "m070_minipile_v2"},
+		{newTrainer(m080, 0.8), "m080_minipile_v2"},
+		{newTrainer(m090, 0.9), "m090_minipile_v2"},
+		{newTrainer(m100, 1.0), "m100_minipile_v2"},
 	}
 
 	for i, t := range trainers {
@@ -115,6 +116,24 @@ func train() {
 		}
 
 		fmt.Printf("%s\n\n", t.string)
+
+		if fileOpen, errOpen := os.Open(filepath.Join(out, "segments.gob")); errOpen != nil {
+			if fileCreate, errCreate := os.Create(filepath.Join(out, "segments.gob")); errCreate != nil {
+				log.Fatal(errCreate)
+			} else {
+				defer fileCreate.Close()
+
+				if err := t.SaveSegments(fileCreate); err != nil {
+					log.Fatal(errOpen)
+				}
+			}
+		} else {
+			defer fileOpen.Close()
+
+			if err := t.LoadSegments(fileOpen); err != nil {
+				log.Fatal(errOpen)
+			}
+		}
 
 		t.Train()
 
