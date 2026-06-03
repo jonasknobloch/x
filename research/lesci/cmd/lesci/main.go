@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"log"
 	"path"
 
@@ -13,38 +13,35 @@ import (
 )
 
 func main() {
+	obs := flag.String("tok-obs", "", "observed tokenizer")
+	ctf := flag.String("tok-ctf", "", "counterfactual tokenizer")
+
+	chkpt := flag.String("c", "", "")
+
+	outPath := flag.String("o", "", "")
+
+	dry := flag.Bool("dry", false, "")
+
+	flag.Parse()
+
+	if flag.NArg() < 1 {
+		log.Fatal("usage: lesci [flags] <model>")
+	}
+
+	if *obs == "" || *ctf == "" {
+		log.Fatal("tokenizers not specified")
+	}
+
+	modelPath := flag.Arg(0)
+
 	if err := gpt2.InitializeEnvironment(); err != nil {
 		log.Fatal(err)
 	}
 
-	sizes := []int{8192, 16384, 32768, 50256, 100512}
+	m := must(model(path.Join(shelf.Abs(shelf.Item(modelPath)), *chkpt, "model_eval.onnx"), 50256))
 
-	for i := range len(sizes) - 1 {
-		e, m := setup(sizes[i], sizes[len(sizes)-1])
-
-		if err := m.Init(); err != nil {
-			log.Fatal(err)
-		}
-
-		if err := e.Run(); err != nil {
-			log.Fatal(err)
-		}
-
-		if err := m.Destroy(); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	if err := gpt2.DestroyEnvironment(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func setup(control, treatment int) (*lesci.Experiment, *gpt2.Model) {
-	a := fmt.Sprintf(shelf.Abs("models/mbpe/gpt2_%d_m000_babylm_v2"), control)
-	b := fmt.Sprintf(shelf.Abs("models/mbpe/gpt2_%d_m000_babylm_v2"), 100512)
-
-	m := must(model(path.Join(a, "model_eval.onnx"), control))
+	a := shelf.Abs(shelf.Item(*obs))
+	b := shelf.Abs(shelf.Item(*ctf))
 
 	cfg := bpe.Config{
 		Recover: true,
@@ -53,11 +50,25 @@ func setup(control, treatment int) (*lesci.Experiment, *gpt2.Model) {
 	t := must(bpe.NewTokenizerFromFiles(path.Join(a, "vocab.json"), path.Join(a, "merges.txt"), cfg))
 	c := must(bpe.NewTokenizerFromFiles(path.Join(b, "vocab.json"), path.Join(b, "merges.txt"), cfg))
 
-	d := must(dataset.NewFileReader(shelf.Abs("data/babylm/train_100M"), "*.train"))
+	d := must(dataset.NewParquetReader(shelf.Abs("data/minipile/test")))
 
-	o := fmt.Sprintf(shelf.Abs("results/lesci/m000/babylm_%d_%d"), control, treatment)
+	o := path.Join(shelf.Abs(shelf.Item(*outPath)), path.Base(shelf.Abs(shelf.Item(modelPath))), *chkpt)
 
-	return must(lesci.NewExperiment(m, t, c, d, o, control, 5000)), m
+	e := must(lesci.NewExperiment(m, t, c, d, o, 50256, 5000))
+
+	if err := m.Init(); err != nil {
+		log.Fatal(err)
+	}
+
+	if !*dry {
+		if err := e.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if err := gpt2.DestroyEnvironment(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func must[T any](v T, err error) T {
