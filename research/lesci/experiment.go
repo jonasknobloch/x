@@ -66,6 +66,10 @@ func (e *Experiment) Run() error {
 		return err
 	}
 
+	if err := e.Peek(db, 20); err != nil {
+		return err
+	}
+
 	if err := e.Analyze(db); err != nil {
 		return err
 	}
