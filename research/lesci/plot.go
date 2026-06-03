@@ -3,9 +3,12 @@ package lesci
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"image/color"
+	"os"
 	"path"
 	"slices"
+	"strings"
 
 	"gonum.org/v1/gonum/stat"
 	"gonum.org/v1/plot"
@@ -89,7 +92,24 @@ func render(pts plotter.XYs, inX, inY, oovX, oovY []float64, cutoff float64, out
 		return err
 	}
 
-	return p.Save(10*vg.Inch, 6*vg.Inch, out)
+	if err := addDelta(p, slices.Min(inX), aIn+bIn*cutoff, aOov+bOov*cutoff); err != nil {
+		return err
+	}
+
+	if err := p.Save(10*vg.Inch, 6*vg.Inch, out); err != nil {
+		return err
+	}
+
+	yIn := aIn + bIn*cutoff
+	yOov := aOov + bOov*cutoff
+
+	delta := yOov - yIn
+
+	txt := strings.TrimSuffix(out, path.Ext(out)) + ".txt"
+
+	content := fmt.Sprintf("left: %.6f\nright: %.6f\ndiff: %.6f\n", yIn, yOov, delta)
+
+	return os.WriteFile(txt, []byte(content), 0644)
 }
 
 func addScatter(p *plot.Plot, pts plotter.XYs) error {
@@ -135,6 +155,23 @@ func addStep(p *plot.Plot, aIn, bIn, aOov, bOov, cutoff float64, c color.Color) 
 	l.Width = vg.Points(1.5)
 
 	p.Add(l)
+
+	return nil
+}
+
+func addDelta(p *plot.Plot, xMin, yIn, yOov float64) error {
+	delta := yOov - yIn
+
+	labels, err := plotter.NewLabels(plotter.XYLabels{
+		XYs:    plotter.XYs{{X: xMin, Y: -19}},
+		Labels: []string{fmt.Sprintf("δ = %.4f", delta)},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	p.Add(labels)
 
 	return nil
 }
