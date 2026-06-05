@@ -41,18 +41,16 @@ func (e *Experiment) Plot(db *sql.DB) error {
 			return err
 		}
 
-		if mean < -20 || mean > 0 {
-			continue
-		}
-
-		pts = append(pts, plotter.XY{X: tok, Y: mean})
-
 		if treat {
 			inX = append(inX, tok)
 			inY = append(inY, mean)
 		} else {
 			oovX = append(oovX, tok)
 			oovY = append(oovY, mean)
+		}
+
+		if mean >= -20 && mean <= 0 {
+			pts = append(pts, plotter.XY{X: tok, Y: mean})
 		}
 	}
 
