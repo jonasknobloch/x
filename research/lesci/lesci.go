@@ -16,9 +16,9 @@ func ExtractData(rules tensor.Dense[int64], valid []bool, cutoff, window int64) 
 		panic("shape mismatch")
 	}
 
-	// clamped := Window(rules, valid, cutoff, window)
+	clamped := Window(rules, valid, cutoff, window)
 
-	clamped := valid // collect everything for now
+	// clamped := valid // collect everything for now
 
 	filtered := Filter(rules, clamped, cutoff)
 	oov := OutOfVocab(rules, filtered, cutoff)
