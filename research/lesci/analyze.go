@@ -102,5 +102,40 @@ func (e *Experiment) Analyze(db *sql.DB) error {
 		return fmt.Errorf("lesci_results: %w", err)
 	}
 
+	if err := numSamples(ctx, tx); err != nil {
+		return err
+	}
+
 	return tx.Commit()
+}
+
+func numSamples(ctx context.Context, tx *sql.Tx) error {
+	var rows *sql.Rows
+
+	if r, err := tx.QueryContext(ctx, `SELECT treat, COUNT(*), SUM(num) FROM lesci_results GROUP BY treat ORDER BY treat DESC`); err != nil {
+		return err
+	} else {
+		rows = r
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var treat bool
+		var tokens, occurrences int
+
+		if err := rows.Scan(&treat, &tokens, &occurrences); err != nil {
+			return err
+		}
+
+		side := "right"
+
+		if treat {
+			side = "left"
+		}
+
+		fmt.Printf("%s: %d tokens, %d occurrences\n", side, tokens, occurrences)
+	}
+
+	return rows.Err()
 }
