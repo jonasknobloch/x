@@ -21,9 +21,11 @@ type Experiment struct {
 	name           string
 	cutoff         int
 	window         int
+	config         Config
+	options        Options
 }
 
-func NewExperiment(model llm.Causal, tokenizer, counterfactual llm.Tokenizer, data dataset.Reader, name string, cutoff, window int) (*Experiment, error) {
+func NewExperiment(model llm.Causal, tokenizer, counterfactual llm.Tokenizer, data dataset.Reader, name string, cutoff, window int, cfg Config, opts Options) (*Experiment, error) {
 	e := &Experiment{
 		model:          model,
 		tokenizer:      tokenizer,
@@ -32,6 +34,8 @@ func NewExperiment(model llm.Causal, tokenizer, counterfactual llm.Tokenizer, da
 		name:           name,
 		cutoff:         cutoff,
 		window:         window,
+		config:         cfg,
+		options:        opts,
 	}
 
 	return e, nil

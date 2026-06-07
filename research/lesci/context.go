@@ -1,6 +1,7 @@
 package lesci
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
@@ -39,7 +40,17 @@ func (e *Experiment) BuildContext(db *sql.DB) error {
 	} else if !ok {
 		fmt.Println("context table not empty")
 
-		return nil
+		if !e.options.ForceContext {
+			fmt.Println("skipping context collection")
+
+			return nil
+		}
+
+		fmt.Println("clearing context")
+
+		if _, err := db.ExecContext(context.Background(), `DELETE FROM context`); err != nil {
+			return err
+		}
 	}
 
 	return AppendRows(db, "context", func(append AppendFunc) error {

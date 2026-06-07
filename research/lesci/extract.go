@@ -17,6 +17,14 @@ func (e *Experiment) ExtractData(db *sql.DB) error {
 	} else if !ok {
 		fmt.Println("oov_rules table not empty")
 
+		if !e.options.ForceExtract {
+			fmt.Println("skipping rule extraction")
+
+			return nil
+		}
+
+		fmt.Println("clearing oov_rules")
+
 		if _, err := db.ExecContext(context.Background(), `DELETE FROM oov_rules`); err != nil {
 			return err
 		}
@@ -26,7 +34,7 @@ func (e *Experiment) ExtractData(db *sql.DB) error {
 
 	rules, valid := Rules(e.counterfactual, merges)
 
-	mask := ExtractData(rules, valid, int64(e.cutoff), int64(e.window))
+	mask := ExtractData(rules, valid, int64(e.cutoff), int64(e.window), e.config.ClampRulesBeforeFilter)
 
 	return AppendRows(db, "oov_rules", func(append AppendFunc) error {
 		for i, m := range mask {

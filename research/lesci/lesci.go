@@ -9,16 +9,18 @@ import (
 // ExtractData
 //
 // https://github.com/pietrolesci/tokenisation-bias/blob/376abc0ed6924986cbaf696ea10fdda71e550e45/notebooks/01_extract_data.ipynb
-func ExtractData(rules tensor.Dense[int64], valid []bool, cutoff, window int64) []bool {
+func ExtractData(rules tensor.Dense[int64], valid []bool, cutoff, window int64, clampRulesBeforeFilter bool) []bool {
 	shape := rules.Shape()
 
 	if len(shape) != 2 || shape[0] != len(valid) || shape[1] != 3 {
 		panic("shape mismatch")
 	}
 
-	clamped := Window(rules, valid, cutoff, window)
+	clamped := valid // collect everything for now
 
-	// clamped := valid // collect everything for now
+	if clampRulesBeforeFilter {
+		clamped = Window(rules, valid, cutoff, window)
+	}
 
 	filtered := Filter(rules, clamped, cutoff)
 	oov := OutOfVocab(rules, filtered, cutoff)

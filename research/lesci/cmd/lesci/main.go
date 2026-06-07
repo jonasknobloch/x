@@ -54,7 +54,16 @@ func main() {
 
 	o := path.Join(shelf.Abs(shelf.Item(*outPath)), path.Base(shelf.Abs(shelf.Item(modelPath))), *chkpt)
 
-	e := must(lesci.NewExperiment(m, t, c, d, o, 50256, 5000))
+	exptOpts := lesci.Options{
+		ForceContext: false,
+		ForceExtract: true,
+	}
+
+	expCfg := lesci.ConfigDefault()
+
+	expCfg.ClampRulesBeforeFilter = true
+
+	e := must(lesci.NewExperiment(m, t, c, d, o, 50256, 5000, expCfg, exptOpts))
 
 	if err := m.Init(); err != nil {
 		log.Fatal(err)
