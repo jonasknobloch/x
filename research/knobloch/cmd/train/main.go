@@ -107,25 +107,31 @@ func train() {
 
 		fmt.Printf("%s\n\n", c.string)
 
+		saveSegments := false
+
 		if fileOpen, errOpen := os.Open(filepath.Join(out, "segments.gob")); errOpen != nil {
+			saveSegments = true
+		} else {
+			defer fileOpen.Close()
+
+			if err := t.LoadSegments(fileOpen); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		t.Train()
+
+		if saveSegments {
 			if fileCreate, errCreate := os.Create(filepath.Join(out, "segments.gob")); errCreate != nil {
 				log.Fatal(errCreate)
 			} else {
 				defer fileCreate.Close()
 
 				if err := t.SaveSegments(fileCreate); err != nil {
-					log.Fatal(errOpen)
+					log.Fatal(err)
 				}
 			}
-		} else {
-			defer fileOpen.Close()
-
-			if err := t.LoadSegments(fileOpen); err != nil {
-				log.Fatal(errOpen)
-			}
 		}
-
-		t.Train()
 
 		dir := filepath.Join(out, c.string)
 
