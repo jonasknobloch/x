@@ -49,7 +49,7 @@ func TestTokenBuffer_Push(t *testing.T) {
 			fmt.Sprintf("window%d_stride%d", tt.window, tt.stride),
 
 			func(t *testing.T) {
-				tb := NewTokenBuffer(byteTokenizer{}, tt.window, tt.stride)
+				tb := NewTokenBuffer(byteTokenizer{}, TokenBufferConfig{Window: tt.window, Stride: tt.stride})
 
 				tb.SetIncludeTail(false)
 
@@ -74,7 +74,7 @@ func TestTokenBuffer_Push(t *testing.T) {
 }
 
 func TestTokenBuffer_PushAccumulates(t *testing.T) {
-	tb := NewTokenBuffer(byteTokenizer{}, 4, 4)
+	tb := NewTokenBuffer(byteTokenizer{}, TokenBufferConfig{Window: 4, Stride: 4})
 
 	var got [][]int64
 
@@ -104,7 +104,7 @@ func TestTokenBuffer_PushAccumulates(t *testing.T) {
 }
 
 func TestTokenBuffer_Tail(t *testing.T) {
-	tb := NewTokenBuffer(byteTokenizer{}, 5, 5)
+	tb := NewTokenBuffer(byteTokenizer{}, TokenBufferConfig{Window: 5, Stride: 5})
 
 	tb.SetIncludeTail(true)
 
@@ -132,7 +132,7 @@ func TestTokenBuffer_Tail(t *testing.T) {
 }
 
 func TestTokenBuffer_Position(t *testing.T) {
-	tb := NewTokenBuffer(byteTokenizer{}, 4, 2)
+	tb := NewTokenBuffer(byteTokenizer{}, TokenBufferConfig{Window: 4, Stride: 2})
 
 	tb.SetIncludeTail(false)
 
@@ -162,7 +162,7 @@ func TestTokenBuffer_Position(t *testing.T) {
 }
 
 func TestTokenBuffer_DocumentBoundaryYieldsTail(t *testing.T) {
-	tb := NewTokenBuffer(byteTokenizer{}, 10, 10)
+	tb := NewTokenBuffer(byteTokenizer{}, TokenBufferConfig{Window: 10, Stride: 10})
 
 	tb.SetIncludeTail(true)
 
@@ -194,7 +194,7 @@ func TestTokenBuffer_DocumentBoundaryYieldsTail(t *testing.T) {
 }
 
 func TestTokenBuffer_TailPosition(t *testing.T) {
-	tb := NewTokenBuffer(byteTokenizer{}, 4, 2)
+	tb := NewTokenBuffer(byteTokenizer{}, TokenBufferConfig{Window: 4, Stride: 2})
 
 	tb.SetIncludeTail(true)
 

@@ -53,8 +53,13 @@ func (e *Experiment) BuildContext(db *sql.DB) error {
 		}
 	}
 
+	cfg := llm.TokenBufferConfig{
+		Window: 1024,
+		Stride: 512,
+	}
+
 	return AppendRows(db, "context", func(append AppendFunc) error {
-		return eval.RunAndCollect("Context", e.data, 1024, 512, func(r []logProb) error {
+		return eval.RunAndCollect("Context", e.data, cfg, func(r []logProb) error {
 			for _, l := range r {
 				if err := append([]driver.Value{l.document, l.token, l.value, l.offset}); err != nil {
 					return err

@@ -12,22 +12,27 @@ type TokenBuffer struct {
 	includeTail bool
 }
 
+type TokenBufferConfig struct {
+	Window int
+	Stride int
+}
+
 type TokenWindow struct {
 	Document int
 	Tokens   []int64
 	Seen     int
 }
 
-func NewTokenBuffer(tokenizer Tokenizer, window, stride int) *TokenBuffer {
-	if stride > window {
+func NewTokenBuffer(tokenizer Tokenizer, cfg TokenBufferConfig) *TokenBuffer {
+	if cfg.Stride > cfg.Window {
 		panic("stride exceeds window")
 	}
 
 	return &TokenBuffer{
 		tokenizer:   tokenizer,
-		window:      window,
-		stride:      stride,
-		buffer:      make([]int64, 0, 2*window),
+		window:      cfg.Window,
+		stride:      cfg.Stride,
+		buffer:      make([]int64, 0, 2*cfg.Window),
 		document:    -1,
 		position:    0,
 		includeTail: true,
