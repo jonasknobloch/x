@@ -49,7 +49,7 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, cfg TokenBufferCon
 
 	tb := NewTokenBuffer(e.tokenizer, cfg)
 
-	tb.SetIncludeTail(false)
+	tb.SetIncludeTail(cfg.PadLeft || cfg.PadRight)
 
 	b := newBatch(e.batchSize)
 
@@ -72,10 +72,12 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, cfg TokenBufferCon
 		}
 
 		b.AddJob(Job{
-			Document: doc,
-			Position: pos,
-			Tokens:   tokens,
-			Seen:     seen,
+			Document:     doc,
+			Position:     pos,
+			Tokens:       tokens,
+			Seen:         seen,
+			PaddingLeft:  w.PaddingLeft,
+			PaddingRight: w.PaddingRight,
 		})
 
 		pos++
@@ -132,8 +134,13 @@ func (e *Evaluator[R]) execute(j *batch, device int) {
 			panic("empty context")
 		}
 
-		l := logProbs[i*(s-1)+job.Seen-1 : (i+1)*(s-1)]
-		t := toInt(job.Tokens[job.Seen:])
+		l := logProbs[i*(s-1)+job.PaddingLeft+job.Seen-1 : (i+1)*(s-1)]
+		t := toInt(job.Tokens[job.PaddingLeft+job.Seen:])
+
+		if job.PaddingRight > 0 {
+			l = l[:len(l)-job.PaddingRight]
+			t = t[:len(t)-job.PaddingRight]
+		}
 
 		r := e.callback(job, l, t)
 

@@ -1,10 +1,12 @@
 package llm
 
 type Job struct {
-	Document int
-	Position int
-	Tokens   []int64
-	Seen     int
+	Document     int
+	Position     int
+	Tokens       []int64
+	Seen         int
+	PaddingLeft  int
+	PaddingRight int
 }
 
 type batch struct {

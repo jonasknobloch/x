@@ -43,8 +43,11 @@ func perplexity() {
 	n := 0
 
 	cfg := llm.TokenBufferConfig{
-		Window: 1024,
-		Stride: 512,
+		Window:     1024,
+		Stride:     512,
+		PadLeft:    false, // probably not fine since we don't adjust model inputs for padding
+		PadRight:   true,  // fine since we remove padded log probs anyway
+		PadTokenID: 50256,
 	}
 
 	if err := e.RunAndCollect("Perplexity", d, cfg, func(r pplResult) error {
@@ -60,6 +63,7 @@ func perplexity() {
 	ppl := math.Exp(avg)
 
 	fmt.Println(ppl)
+	fmt.Printf("%d tokens\n", n)
 
 	if err := m.Destroy(); err != nil {
 		log.Fatal(err)

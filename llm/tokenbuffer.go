@@ -10,22 +10,32 @@ type TokenBuffer struct {
 	document    int
 	position    int
 	includeTail bool
+	config      TokenBufferConfig
 }
 
 type TokenBufferConfig struct {
-	Window int
-	Stride int
+	Window     int
+	Stride     int
+	PadLeft    bool
+	PadRight   bool
+	PadTokenID int64
 }
 
 type TokenWindow struct {
-	Document int
-	Tokens   []int64
-	Seen     int
+	Document     int
+	Tokens       []int64
+	Seen         int
+	PaddingLeft  int
+	PaddingRight int
 }
 
 func NewTokenBuffer(tokenizer Tokenizer, cfg TokenBufferConfig) *TokenBuffer {
 	if cfg.Stride > cfg.Window {
 		panic("stride exceeds window")
+	}
+
+	if cfg.PadLeft && cfg.PadRight {
+		panic("either pad left or right")
 	}
 
 	return &TokenBuffer{
@@ -36,6 +46,7 @@ func NewTokenBuffer(tokenizer Tokenizer, cfg TokenBufferConfig) *TokenBuffer {
 		document:    -1,
 		position:    0,
 		includeTail: true,
+		config:      cfg,
 	}
 }
 
@@ -111,6 +122,22 @@ func (tb *TokenBuffer) Tail() (TokenWindow, bool) {
 	w.Tokens = make([]int64, len(tb.buffer))
 
 	copy(w.Tokens, tb.buffer)
+
+	if tb.config.PadLeft || tb.config.PadRight {
+		padding := make([]int64, tb.window-len(w.Tokens))
+
+		for i := range padding {
+			padding[i] = tb.config.PadTokenID
+		}
+
+		if tb.config.PadLeft {
+			w.Tokens = append(padding, w.Tokens...)
+			w.PaddingLeft = len(padding)
+		} else {
+			w.Tokens = append(w.Tokens, padding...)
+			w.PaddingRight = len(padding)
+		}
+	}
 
 	tb.buffer = tb.buffer[:0]
 

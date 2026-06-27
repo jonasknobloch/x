@@ -220,3 +220,81 @@ func TestTokenBuffer_TailPosition(t *testing.T) {
 		t.Errorf("expected tail position=6 but got %d", tailPosition)
 	}
 }
+
+func TestTokenBuffer_Pad(t *testing.T) {
+	type gold struct {
+		config   TokenBufferConfig
+		text     string
+		expected [][]int64
+		seen     int
+	}
+
+	tests := []gold{
+		{
+			config: TokenBufferConfig{
+				Window:     4,
+				Stride:     2,
+				PadLeft:    true,
+				PadRight:   false,
+				PadTokenID: 0,
+			},
+			text:     "abcdefg",
+			expected: [][]int64{{97, 98, 99, 100}, {99, 100, 101, 102}, {0, 101, 102, 103}},
+			seen:     3,
+		},
+		{
+			config: TokenBufferConfig{
+				Window:     4,
+				Stride:     2,
+				PadLeft:    false,
+				PadRight:   true,
+				PadTokenID: 0,
+			},
+			text:     "abcdefg",
+			expected: [][]int64{{97, 98, 99, 100}, {99, 100, 101, 102}, {101, 102, 103, 0}},
+			seen:     2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			fmt.Sprintf("window%d_stride%d_%v_%v", tt.config.Window, tt.config.Stride, tt.config.PadLeft, tt.config.PadRight),
+
+			func(t *testing.T) {
+				tb := NewTokenBuffer(byteTokenizer{}, tt.config)
+
+				tb.SetIncludeTail(true)
+
+				var got [][]int64
+
+				for w := range tb.Push(0, tt.text) {
+					got = append(got, w.Tokens)
+				}
+
+				tail, _ := tb.Tail()
+
+				gotSeen := tail.Seen
+
+				if tt.config.PadLeft {
+					gotSeen += tail.PaddingLeft
+				}
+
+				if gotSeen != tt.seen {
+					t.Fatalf("expected seen %d but got %d", tt.seen, gotSeen)
+				}
+
+				got = append(got, tail.Tokens)
+
+				if len(got) != len(tt.expected) {
+					t.Fatalf("expected %d windows but got %d", len(tt.expected), len(got))
+				}
+
+				for i := range got {
+					if !slices.Equal(got[i], tt.expected[i]) {
+						t.Errorf("window %d: expected %v but got %v", i, tt.expected[i], got[i])
+					}
+				}
+			},
+		)
+	}
+}
