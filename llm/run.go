@@ -56,35 +56,38 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 	doc := 0
 	pos := 0
 
-	for n, d := range data.Texts() {
+	for w := range tb.Stream(data.Texts()) {
+		n := w.Document
+
 		if n != doc {
 			pos = 0
 			doc = n
 		}
 
-		for w, s := range tb.Push(n, d) {
-			if s == 0 {
-				s = 1 // first token as context
-			}
+		tokens := w.Tokens
+		seen := w.Seen
 
-			b.AddJob(Job{
-				Document: doc,
-				Position: pos,
-				Tokens:   w,
-				Seen:     s,
-			})
+		if seen == 0 {
+			seen = 1 // first token as context
+		}
 
-			pos++
+		b.AddJob(Job{
+			Document: doc,
+			Position: pos,
+			Tokens:   tokens,
+			Seen:     seen,
+		})
 
-			if b.Size() == e.batchSize {
-				e.jobs <- *b
+		pos++
 
-				b = newBatch(e.batchSize)
+		if b.Size() == e.batchSize {
+			e.jobs <- *b
 
-				e.scheduled.Add(int64(e.batchSize))
+			b = newBatch(e.batchSize)
 
-				pb.SetTotal(int(e.scheduled.Load()))
-			}
+			e.scheduled.Add(int64(e.batchSize))
+
+			pb.SetTotal(int(e.scheduled.Load()))
 		}
 	}
 

@@ -56,7 +56,7 @@ func TestTokenBuffer_Push(t *testing.T) {
 				var got [][]int64
 
 				for w := range tb.Push(0, tt.text) {
-					got = append(got, w)
+					got = append(got, w.Tokens)
 				}
 
 				if len(got) != len(tt.expected) {
@@ -79,7 +79,7 @@ func TestTokenBuffer_PushAccumulates(t *testing.T) {
 	var got [][]int64
 
 	for w := range tb.Push(0, "ab") {
-		got = append(got, w)
+		got = append(got, w.Tokens)
 	}
 
 	if len(got) != 0 {
@@ -87,7 +87,7 @@ func TestTokenBuffer_PushAccumulates(t *testing.T) {
 	}
 
 	for w := range tb.Push(0, "cd") {
-		got = append(got, w)
+		got = append(got, w.Tokens)
 	}
 
 	expected := [][]int64{{97, 98, 99, 100}}
@@ -111,11 +111,11 @@ func TestTokenBuffer_Tail(t *testing.T) {
 	var got [][]int64
 
 	for w := range tb.Push(0, "abcdef") {
-		got = append(got, w)
+		got = append(got, w.Tokens)
 	}
 
-	if tail, _ := tb.Tail(); tail != nil {
-		got = append(got, tail)
+	if w, ok := tb.Tail(); ok {
+		got = append(got, w.Tokens)
 	}
 
 	expected := [][]int64{{97, 98, 99, 100, 101}, {102}}
@@ -154,9 +154,9 @@ func TestTokenBuffer_Position(t *testing.T) {
 		}
 	}
 
-	_, seen := tb.Tail()
+	tail, _ := tb.Tail()
 
-	if tailPosition := positions[len(positions)-1] + seen; tailPosition != 6 {
+	if tailPosition := positions[len(positions)-1] + tail.Seen; tailPosition != 6 {
 		t.Errorf("expected tail positions=6 but got %d", tailPosition)
 	}
 }
@@ -169,7 +169,7 @@ func TestTokenBuffer_DocumentBoundaryYieldsTail(t *testing.T) {
 	var a [][]int64
 
 	for w := range tb.Push(0, "abcde") {
-		a = append(a, w)
+		a = append(a, w.Tokens)
 	}
 
 	if len(a) != 0 {
@@ -178,8 +178,8 @@ func TestTokenBuffer_DocumentBoundaryYieldsTail(t *testing.T) {
 
 	var b [][]int64
 
-	for w, _ := range tb.Push(2, "fghij") {
-		b = append(b, w)
+	for w := range tb.Push(2, "fghij") {
+		b = append(b, w.Tokens)
 	}
 
 	if len(b) != 1 {
@@ -208,12 +208,12 @@ func TestTokenBuffer_TailPosition(t *testing.T) {
 		t.Errorf("expected last position=4 but got %d", lastPosition)
 	}
 
-	tail, seen := tb.Tail()
+	tail, _ := tb.Tail()
 
-	tailPosition := lastPosition + seen
+	tailPosition := lastPosition + tail.Seen
 
-	if !slices.Equal(tail, toInt64(byteTokenizer{}.Tokenize("gh"))) {
-		t.Errorf("unexpected tail: %v", tail)
+	if !slices.Equal(tail.Tokens, toInt64(byteTokenizer{}.Tokenize("gh"))) {
+		t.Errorf("unexpected tail: %v", tail.Tokens)
 	}
 
 	if tailPosition != 6 {

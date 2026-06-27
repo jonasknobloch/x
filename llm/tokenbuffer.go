@@ -12,6 +12,12 @@ type TokenBuffer struct {
 	includeTail bool
 }
 
+type TokenWindow struct {
+	Document int
+	Tokens   []int64
+	Seen     int
+}
+
 func NewTokenBuffer(tokenizer Tokenizer, window, stride int) *TokenBuffer {
 	if stride > window {
 		panic("stride exceeds window")
@@ -40,12 +46,12 @@ func (tb *TokenBuffer) Position() int {
 	return tb.position
 }
 
-func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
-	return func(yield func([]int64, int) bool) {
+func (tb *TokenBuffer) Push(document int, text string) iter.Seq[TokenWindow] {
+	return func(yield func(window TokenWindow) bool) {
 		if tb.document != -1 && document != tb.document {
-			tail, seen := tb.Tail()
+			w, ok := tb.Tail()
 
-			if len(tail) > 0 && !yield(tail, seen) {
+			if ok && !yield(w) {
 				return
 			}
 		}
@@ -61,11 +67,15 @@ func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
 		tb.buffer = append(tb.buffer, ids...)
 
 		for len(tb.buffer) >= tb.window {
-			w := make([]int64, tb.window)
+			w := TokenWindow{
+				Document: tb.document,
+				Tokens:   make([]int64, tb.window),
+				Seen:     min(tb.Position(), tb.window-tb.stride),
+			}
 
-			copy(w, tb.buffer[:tb.window])
+			copy(w.Tokens, tb.buffer[:tb.window])
 
-			if !yield(w, min(tb.Position(), tb.window-tb.stride)) {
+			if !yield(w) {
 				return
 			}
 
@@ -76,8 +86,13 @@ func (tb *TokenBuffer) Push(document int, text string) iter.Seq2[[]int64, int] {
 	}
 }
 
-func (tb *TokenBuffer) Tail() ([]int64, int) {
+func (tb *TokenBuffer) Tail() (TokenWindow, bool) {
 	seen := min(tb.Position(), min(len(tb.buffer), tb.window-tb.stride))
+
+	w := TokenWindow{
+		Document: tb.document,
+		Seen:     seen,
+	}
 
 	tb.document = -1
 	tb.position = 0
@@ -85,14 +100,30 @@ func (tb *TokenBuffer) Tail() ([]int64, int) {
 	if !tb.includeTail || len(tb.buffer) == 0 {
 		tb.buffer = tb.buffer[:0]
 
-		return nil, seen
+		return w, false
 	}
 
-	w := make([]int64, len(tb.buffer))
+	w.Tokens = make([]int64, len(tb.buffer))
 
-	copy(w, tb.buffer)
+	copy(w.Tokens, tb.buffer)
 
 	tb.buffer = tb.buffer[:0]
 
-	return w, seen
+	return w, true
+}
+
+func (tb *TokenBuffer) Stream(docs iter.Seq2[int, string]) iter.Seq[TokenWindow] {
+	return func(yield func(window TokenWindow) bool) {
+		for n, d := range docs {
+			for w := range tb.Push(n, d) {
+				if !yield(w) {
+					return
+				}
+			}
+
+			if w, ok := tb.Tail(); ok && !yield(w) {
+				return
+			}
+		}
+	}
 }
