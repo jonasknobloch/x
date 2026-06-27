@@ -3,10 +3,12 @@ package llm
 import "iter"
 
 type TokenBufferConfig struct {
-	Window int
-	Stride int
+	Window     int
+	Stride     int
+	PadLeft    bool
+	PadRight   bool
+	PadTokenID int64
 }
-
 type TokenBuffer struct {
 	tokenizer   Tokenizer
 	window      int
@@ -15,12 +17,19 @@ type TokenBuffer struct {
 	document    int
 	position    int
 	includeTail bool
+	config      TokenBufferConfig
 }
 
 func NewTokenBuffer(tokenizer Tokenizer, cfg TokenBufferConfig) *TokenBuffer {
 	if cfg.Stride > cfg.Window {
 		panic("stride exceeds window")
 	}
+
+	if cfg.PadLeft && cfg.PadRight {
+		panic("either pad left or right")
+	}
+
+	// attention mask during inference should probably be adjusted when using left padding
 
 	return &TokenBuffer{
 		tokenizer:   tokenizer,
@@ -30,6 +39,7 @@ func NewTokenBuffer(tokenizer Tokenizer, cfg TokenBufferConfig) *TokenBuffer {
 		document:    -1,
 		position:    0,
 		includeTail: true,
+		config:      cfg,
 	}
 }
 
@@ -97,7 +107,25 @@ func (tb *TokenBuffer) Tail() ([]int64, int) {
 
 	copy(w, tb.buffer)
 
+	if tb.config.PadLeft || tb.config.PadRight {
+		padding := make([]int64, tb.window-len(w))
+
+		for i := range padding {
+			padding[i] = tb.config.PadTokenID
+		}
+
+		if tb.config.PadLeft {
+			w = append(padding, w...)
+
+			seen += len(padding) // can be recovered by counting padding tokens
+		} else {
+			w = append(w, padding...)
+		}
+	}
+
 	tb.buffer = tb.buffer[:0]
 
 	return w, seen
 }
+
+// TODO func (tb *TokenBuffer) Stream(docs iter.Seq2[int, string]) iter.Seq[Window]

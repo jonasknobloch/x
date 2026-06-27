@@ -49,7 +49,9 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, cfg TokenBufferCon
 
 	tb := NewTokenBuffer(e.tokenizer, cfg)
 
-	tb.SetIncludeTail(false)
+	if cfg.PadLeft || cfg.PadRight {
+		tb.SetIncludeTail(true)
+	}
 
 	b := newBatch(e.batchSize)
 
@@ -86,6 +88,21 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, cfg TokenBufferCon
 				pb.SetTotal(int(e.scheduled.Load()))
 			}
 		}
+	}
+
+	if tail, seen := tb.Tail(); len(tail) > 0 {
+		if seen == 0 {
+			seen = 1
+		}
+
+		b.AddJob(Job{
+			Document: doc,
+			Position: pos,
+			Tokens:   tail,
+			Seen:     seen,
+		})
+
+		pos++
 	}
 
 	if s := b.Size(); s > 0 {
