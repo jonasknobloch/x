@@ -8,7 +8,7 @@ import (
 	"go.jknobloc.com/x/tui"
 )
 
-func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int) error {
+func (e *Evaluator[R]) Run(title string, data dataset.Reader, cfg TokenBufferConfig) error {
 	devices := make([]int, len(e.models))
 
 	for i := range len(devices) {
@@ -47,7 +47,7 @@ func (e *Evaluator[R]) Run(title string, data dataset.Reader, window, stride int
 
 	defer pb.Close()
 
-	tb := NewTokenBuffer(e.tokenizer, window, stride)
+	tb := NewTokenBuffer(e.tokenizer, cfg)
 
 	tb.SetIncludeTail(false)
 
