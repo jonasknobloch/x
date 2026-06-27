@@ -16,12 +16,15 @@ func main() {
 
 	perplexity()
 
+	// pad right: 11.930400581007826 / 22544 tokens
+	// unpadded: 11.246722646921588 / 19451 tokens
+
 	if err := gpt2.DestroyEnvironment(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func data() *dataset.ParquetReader {
+func data() dataset.Reader {
 	var miniPile *dataset.ParquetReader
 
 	if r, err := dataset.NewParquetReader(shelf.Abs("data/minipile/validation")); err != nil {
@@ -30,7 +33,7 @@ func data() *dataset.ParquetReader {
 		miniPile = r
 	}
 
-	return miniPile
+	return dataset.NewClampedReader(miniPile, 10)
 }
 
 func model() *gpt2.Model {
