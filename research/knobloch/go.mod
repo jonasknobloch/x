@@ -1,3 +1,3 @@
 module go.jknobloc.com/x/research/knobloch
 
-go 1.25
+go 1.25.0

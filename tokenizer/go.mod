@@ -3,10 +3,12 @@ module go.jknobloc.com/x/tokenizer
 go 1.25.0
 
 require (
-	github.com/jonasknobloch/mbpe v0.1.1
-	go.jknobloc.com/x/dataset v0.0.0-20260324194423-87bbece7e040
+	github.com/jonasknobloch/mbpe v0.1.2
+	go.jknobloc.com/x/dataset v0.0.0-20260424095002-12f15fdd8c04
 	go.jknobloc.com/x/llm v0.0.0-20260324194423-87bbece7e040
-	go.jknobloc.com/x/tui v0.0.0-20260324194423-87bbece7e040
+	go.jknobloc.com/x/profile v0.0.0-20260626223026-e3713a4b0402
+	go.jknobloc.com/x/shelf v0.0.0-20260519111645-306baa3f2a00
+	go.jknobloc.com/x/tui v0.0.0-20260424095002-12f15fdd8c04
 )
 
 require (
@@ -19,11 +21,15 @@ require (
 	github.com/apache/arrow-go/v18 v18.5.1 // indirect
 	github.com/apache/thrift v0.22.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
+	github.com/go-git/go-billy/v5 v5.8.0 // indirect
+	github.com/go-git/go-git/v5 v5.18.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
@@ -46,4 +52,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

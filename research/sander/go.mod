@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/duckdb/duckdb-go/v2 v2.10501.0
+	go.jknobloc.com/x/gpt2 v0.0.0-20260410210408-456f8218a2d1
 	go.jknobloc.com/x/onnx v0.0.0-20260417134810-4d8f647bfb54
 	go.jknobloc.com/x/research/lesci v0.0.0-20260414175339-402477b200d1
 	go.jknobloc.com/x/tensor v0.0.0-20260414175339-402477b200d1
@@ -40,6 +41,7 @@ require (
 	github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8 // indirect
 	github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
+	github.com/yalue/onnxruntime_go v1.25.0 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.jknobloc.com/x/dataset v0.0.0-20260410210408-456f8218a2d1 // indirect
 	go.jknobloc.com/x/llm v0.0.0-20260410210408-456f8218a2d1 // indirect
